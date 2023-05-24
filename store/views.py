@@ -1,9 +1,9 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
-from store.serializers import CategorySerializer, ProductByCategorySerializer
+from store.serializers import CategorySerializer, ProductByCategorySerializer, ProductSerializer, ProductImageSerializer
 from store.permissions import IsAdminOrReadOnly
-from store.models import Category, Product
+from store.models import Category, Product, ProductImage
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -28,3 +28,34 @@ class ProductByCategoryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(category_id=self.kwargs['category_pk'])
+
+
+class ProductViewSet(mixins.ListModelMixin,
+                     mixins.UpdateModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.DestroyModelMixin,
+                     viewsets.GenericViewSet):
+    queryset = Product.objects.select_related('category').all()
+    serializer_class = ProductSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+
+class ProductImageViewSet(mixins.ListModelMixin,
+                          mixins.CreateModelMixin,
+                          mixins.RetrieveModelMixin,
+                          mixins.DestroyModelMixin,
+                          viewsets.GenericViewSet):
+    queryset = ProductImage.objects.select_related('product').all()
+    permission_classes = [IsAdminOrReadOnly]
+    serializer_class = ProductImageSerializer
+
+    def get_queryset(self):
+        product = Product.objects.filter(pk=self.kwargs['product_pk']).first()
+        if not product:
+            raise NotFound(detail='Product with this id was not found')
+        return ProductImage.objects.\
+            select_related('product').\
+            filter(product__pk=self.kwargs['product_pk'])
+
+    def perform_create(self, serializer):
+        serializer.save(product_id=self.kwargs['product_pk'])

@@ -5,6 +5,7 @@ from store import views
 
 router = DefaultRouter()
 router.register(r'categories', views.CategoryViewSet, basename='category')
+router.register(r'products', views.ProductViewSet, basename='product')
 
 categories_router = routers.NestedSimpleRouter(
     router, r'categories', lookup='category'
@@ -12,8 +13,16 @@ categories_router = routers.NestedSimpleRouter(
 categories_router.register(
     r'products', views.ProductByCategoryViewSet, basename='category-product'
 )
+products_router = routers.NestedSimpleRouter(
+    router, r'products', lookup='product'
+)
+
+products_router.register(
+    r'images', views.ProductImageViewSet, basename='product-image'
+)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('', include(categories_router.urls))
+    path('', include(categories_router.urls)),
+    path('', include(products_router.urls))
 ]
