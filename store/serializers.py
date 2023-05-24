@@ -34,5 +34,5 @@ class ProductByCategorySerializer(NestedHyperlinkedModelSerializer):
     class Meta:
         model = Product
         fields = ['url', 'title', 'description',
-                  'in_stock', 'unit_price', 'image',
+                  'number_in_stock', 'unit_price',
                   'category_title', 'category']
