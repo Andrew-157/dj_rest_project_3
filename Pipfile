@@ -9,6 +9,7 @@ djangorestframework = "*"
 mysqlclient = "*"
 django-environ = "*"
 pillow = "*"
+drf-nested-routers = "*"
 
 [dev-packages]
 autopep8 = "*"
