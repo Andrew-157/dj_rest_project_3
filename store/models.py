@@ -8,6 +8,9 @@ class Category(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        ordering = ['title']
+
 
 class Product(models.Model):
     title = models.CharField(max_length=155)
@@ -24,9 +27,15 @@ class Product(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        ordering = ['-last_update']
+
 
 class ProductImage(models.Model):
     product = models.ForeignKey(
         'store.Product', on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='store/images',
                               null=False, validators=[validate_file_size])
+
+    class Meta:
+        ordering = ['id']
