@@ -1,27 +1,43 @@
 from rest_framework import serializers
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 from rest_framework_nested.relations import NestedHyperlinkedRelatedField, NestedHyperlinkedIdentityField
-from store.models import Category, Product, ProductImage
+from store.models import Category, Product, ProductImage, Brand
 
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
-    products = serializers.HyperlinkedRelatedField(
-        view_name='product-detail', read_only=True,
-        many=True
-    )
 
     class Meta:
         model = Category
-        fields = ['url', 'id', 'title', 'products']
+        fields = ['url', 'id', 'title']
+
+
+class BrandSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Brand
+        fields = ['url', 'id', 'name', 'logo']
 
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
-    category_title = serializers.ReadOnlyField(source='category.title')
+    category = CategorySerializer()
+    brand = BrandSerializer()
 
     class Meta:
         model = Product
         fields = [
             'url', 'id', 'title', 'description',
             'number_in_stock', 'unit_price', 'last_update',
-            'category_title', 'category', 'brand'
+            'category',  'brand'
+        ]
+
+
+class CreateUpdateProductSerializer(serializers.HyperlinkedModelSerializer):
+    # category_title = serializers.ReadOnlyField(source='category.title')
+
+    class Meta:
+        model = Product
+        fields = [
+            'url', 'id', 'title', 'description', 'number_in_stock',
+            'unit_price', 'last_update',
+            'category', 'brand'
         ]
