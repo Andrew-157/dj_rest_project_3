@@ -5,7 +5,12 @@ from store import views
 
 router = DefaultRouter()
 router.register(r'categories', views.CategoryViewSet, basename='category')
+# /categories/
+# /categories/{pk}/
+
 router.register(r'products', views.ProductViewSet, basename='product')
+# /products/
+# /products/{pk}/
 
 categories_router = routers.NestedSimpleRouter(
     router, r'categories', lookup='category'
@@ -13,6 +18,9 @@ categories_router = routers.NestedSimpleRouter(
 categories_router.register(
     r'products', views.ProductByCategoryViewSet, basename='category-product'
 )
+# /categories/{category_pk}/products/
+# /categories/{category_pk}/products/{pk}/
+
 products_router = routers.NestedSimpleRouter(
     router, r'products', lookup='product'
 )
@@ -20,10 +28,16 @@ products_router = routers.NestedSimpleRouter(
 products_router.register(
     r'images', views.ProductImageViewSet, basename='product-image'
 )
+# /products/{product_pk}/images/
+# /products/{product_pk}/images/{pk}/
+
 products_nested_router = routers.NestedSimpleRouter(
     categories_router, r'products', lookup='product')
 products_nested_router.register(
     r'images', views.ProductImageByCategoryViewSet, basename='category-product-image')
+
+# /categories/{category_pk}/products/{product_pk}/images/
+# /categories/{category_pk}/products/{product_pk}/images/{pk}/
 
 urlpatterns = [
     path('', include(router.urls)),
