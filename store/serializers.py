@@ -32,12 +32,13 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CreateUpdateProductSerializer(serializers.HyperlinkedModelSerializer):
-    # category_title = serializers.ReadOnlyField(source='category.title')
+    category_title = serializers.ReadOnlyField(source='category.title')
+    brand_title = serializers.ReadOnlyField(source='brand.name')
 
     class Meta:
         model = Product
         fields = [
             'url', 'id', 'title', 'description', 'number_in_stock',
             'unit_price', 'last_update',
-            'category', 'brand'
+            'category', 'brand', 'category_title', 'brand_title'
         ]
