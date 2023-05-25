@@ -31,9 +31,9 @@ products_router.register(
 # /products/{product_pk}/images/
 # /products/{product_pk}/images/{pk}/
 
-products_nested_router = routers.NestedSimpleRouter(
+products_images_router = routers.NestedSimpleRouter(
     categories_router, r'products', lookup='product')
-products_nested_router.register(
+products_images_router.register(
     r'images', views.ProductImageByCategoryViewSet, basename='category-product-image')
 
 # /categories/{category_pk}/products/{product_pk}/images/
@@ -43,5 +43,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('', include(categories_router.urls)),
     path('', include(products_router.urls)),
-    path('', include(products_nested_router.urls))
+    path('', include(products_images_router.urls))
 ]
