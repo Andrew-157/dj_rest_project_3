@@ -22,6 +22,6 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
         model = Product
         fields = [
             'url', 'id', 'title', 'description',
-            'number_in_stock', 'last_update',
-            'category_title', 'category'
+            'number_in_stock', 'unit_price', 'last_update',
+            'category_title', 'category', 'brand'
         ]
