@@ -32,10 +32,14 @@ class ProductByCategorySerializer(NestedHyperlinkedModelSerializer):
     )
 
     images = NestedHyperlinkedRelatedField(
-        view_name='product-image-detail',
+        view_name='category-product-image-detail',
         many=True,
         read_only=True,
-        parent_lookup_kwargs={'product_pk': 'product__pk'}
+        # parent_lookup_kwargs={'product_pk': 'product__pk'}
+        parent_lookup_kwargs={
+            'product_pk': 'product__pk',
+            'category_pk': 'product__category__pk'
+        }
     )
 
     class Meta:
@@ -81,3 +85,33 @@ class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = ['url', 'id', 'image', 'product_title', 'product']
+
+
+class ProductImageByCategorySerializer(NestedHyperlinkedModelSerializer):
+    url = NestedHyperlinkedIdentityField(
+        view_name='category-product-image-detail',
+        lookup_field='pk',
+        parent_lookup_kwargs={
+            'product_pk': 'product__pk',
+            'category_pk': 'product__category__pk'
+        }
+    )
+    # parent_lookup_kwargs = {
+    #     'product_pk': 'product__pk',
+    #     'category_pk': 'product__category__pk'
+    # }
+    product_title = serializers.ReadOnlyField(source='product.title')
+    # product = NestedHyperlinkedRelatedField(
+    #     view_name='category-product-detail', read_only=True,
+    #     lookup_field='pk',
+    #     parent_lookup_kwargs={
+    #         'product_pk': 'product__pk',
+    #         'category_pk': 'category__pk'
+    #     }
+    # )
+
+    class Meta:
+        model = ProductImage
+        fields = [
+            'url', 'id', 'image', 'product_title',
+        ]

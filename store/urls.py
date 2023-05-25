@@ -20,9 +20,14 @@ products_router = routers.NestedSimpleRouter(
 products_router.register(
     r'images', views.ProductImageViewSet, basename='product-image'
 )
+products_nested_router = routers.NestedSimpleRouter(
+    categories_router, r'products', lookup='product')
+products_nested_router.register(
+    r'images', views.ProductImageByCategoryViewSet, basename='category-product-image')
 
 urlpatterns = [
     path('', include(router.urls)),
     path('', include(categories_router.urls)),
-    path('', include(products_router.urls))
+    path('', include(products_router.urls)),
+    path('', include(products_nested_router.urls))
 ]
