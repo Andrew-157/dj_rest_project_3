@@ -4,6 +4,7 @@ from store.validators import validate_file_size
 
 class Brand(models.Model):
     name = models.CharField(max_length=155, unique=True)
+    slug = models.CharField(max_length=100, unique=True, null=True)
     logo = models.ImageField(upload_to='store/images/',
                              validators=[validate_file_size])
 
