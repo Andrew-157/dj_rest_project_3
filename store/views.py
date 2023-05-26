@@ -1,8 +1,11 @@
+from django.http import Http404
 from rest_framework import viewsets, mixins
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.exceptions import NotFound, MethodNotAllowed
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import filters
+from rest_framework import status
 from store.permissions import IsAdminOrReadOnly
 from store.models import Category, Product, ProductImage, Brand
 from store.serializers import CategorySerializer, ProductSerializer, \
