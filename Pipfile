@@ -11,6 +11,7 @@ django-environ = "*"
 pillow = "*"
 drf-nested-routers = "*"
 django-cleanup = "*"
+django-filter = "*"
 
 [dev-packages]
 autopep8 = "*"
