@@ -21,13 +21,19 @@ class BrandSerializer(serializers.HyperlinkedModelSerializer):
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
     category = CategorySerializer()
     brand = BrandSerializer()
+    images = NestedHyperlinkedRelatedField(
+        many=True,
+        read_only=True,
+        view_name='product-image-detail',
+        parent_lookup_kwargs={'product_pk': 'product__pk'}
+    )
 
     class Meta:
         model = Product
         fields = [
             'url', 'id', 'title', 'description',
             'number_in_stock', 'unit_price', 'last_update',
-            'category',  'brand'
+            'images', 'category',  'brand'
         ]
 
 
@@ -42,3 +48,21 @@ class CreateUpdateProductSerializer(serializers.HyperlinkedModelSerializer):
             'unit_price', 'last_update',
             'category', 'brand', 'category_title', 'brand_title'
         ]
+
+
+class ProductImageSerializer(NestedHyperlinkedModelSerializer):
+    url = NestedHyperlinkedIdentityField(
+        view_name='product-image-detail',
+        lookup_field='pk',
+        parent_lookup_kwargs={
+            'product_pk': 'product__pk'
+        }
+    )
+    product = serializers.HyperlinkedRelatedField(
+        view_name='product-detail', read_only=True
+    )
+    product_title = serializers.ReadOnlyField(source='product.title')
+
+    class Meta:
+        model = ProductImage
+        fields = ['url', 'id', 'image', 'product_title', 'product']

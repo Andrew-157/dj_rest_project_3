@@ -4,7 +4,8 @@ from rest_framework.exceptions import NotFound, MethodNotAllowed
 from rest_framework.response import Response
 from store.permissions import IsAdminOrReadOnly
 from store.models import Category, Product, ProductImage, Brand
-from store.serializers import CategorySerializer, ProductSerializer, BrandSerializer, CreateUpdateProductSerializer
+from store.serializers import CategorySerializer, ProductSerializer, \
+    BrandSerializer, CreateUpdateProductSerializer, ProductImageSerializer
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -43,3 +44,24 @@ class BrandViewSet(viewsets.ModelViewSet):
             raise MethodNotAllowed(method='DELETE',
                                    detail='There are products associated with this brand')
         return super().destroy(request, *args, **kwargs)
+
+
+class ProductImageViewSet(mixins.ListModelMixin,
+                          mixins.RetrieveModelMixin,
+                          mixins.CreateModelMixin,
+                          mixins.DestroyModelMixin,
+                          viewsets.GenericViewSet):
+    queryset = ProductImage.objects.\
+        select_related('product').all()
+    serializer_class = ProductImageSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        product = Product.objects.filter(pk=self.kwargs['product_pk']).first()
+        if not product:
+            raise NotFound(detail='No product with this id was found')
+        return ProductImage.objects.select_related('product').\
+            filter(product=self.kwargs['product_pk'])
+
+    def perform_create(self, serializer):
+        serializer.save(product_id=self.kwargs['product_pk'])
