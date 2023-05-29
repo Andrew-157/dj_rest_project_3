@@ -43,6 +43,8 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
+    author = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='recipes', null=True)
     title = models.CharField(max_length=155, unique=True)
     slug = models.SlugField(max_length=155, unique=True, blank=True)
     category = models.ForeignKey(Ingredient,
