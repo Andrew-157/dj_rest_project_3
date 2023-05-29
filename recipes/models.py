@@ -46,10 +46,11 @@ class Recipe(models.Model):
     author = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name='recipes', null=True)
     title = models.CharField(max_length=155, unique=True)
+    instructions = models.TextField()
     slug = models.SlugField(max_length=155, unique=True, blank=True)
-    category = models.ForeignKey(Ingredient,
+    category = models.ForeignKey(Category,
                                  on_delete=models.PROTECT, related_name='recipes')
-    ingredients = models.ManyToManyField(Ingredient)
+    ingredients = models.ManyToManyField(Ingredient, related_name='recipes')
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title)

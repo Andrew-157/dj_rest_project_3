@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from recipes.models import Category
+from recipes.models import Category, Ingredient
 
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
