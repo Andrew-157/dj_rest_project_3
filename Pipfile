@@ -12,6 +12,8 @@ pillow = "*"
 drf-nested-routers = "*"
 django-cleanup = "*"
 django-filter = "*"
+djoser = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 autopep8 = "*"
