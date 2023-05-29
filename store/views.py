@@ -17,8 +17,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['title']
-    ordering_fields = ['title']
+    search_fields = ['title', 'slug']
+    ordering_fields = ['title', 'slug']
 
     def destroy(self, request, *args, **kwargs):
         if Product.objects.select_related('category').filter(category_id=kwargs['pk']):
@@ -33,8 +33,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         select_related('brand').all()
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['title', 'brand__name', 'category__title']
+    search_fields = ['title', 'brand__name',
+                     'category__title', 'brand__slug', 'category__slug']
     ordering_fields = ['title', 'brand__name', 'category__title',
+                       'brand__slug', 'category__slug',
                        'unit_price', 'last_update', 'number_in_stock']
 
     def get_serializer_class(self):
@@ -50,8 +52,8 @@ class BrandViewSet(viewsets.ModelViewSet):
     serializer_class = BrandSerializer
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
-    ordering_fields = ['name']
+    search_fields = ['name', 'slug']
+    ordering_fields = ['name', 'slug']
 
     def destroy(self, request, *args, **kwargs):
         if Product.objects.select_related('brand').filter(brand_id=kwargs['pk']):
