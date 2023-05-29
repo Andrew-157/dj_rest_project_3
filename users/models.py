@@ -16,18 +16,6 @@ def validate_image(image):
 
 
 class CustomUser(AbstractUser):
-    CHEF = 'CF'
-    SOUS_CHEF = 'SC'
-    COOK = 'CK'
-    AMATEUR = 'AR'
-    COOKING_STATUS_TITLES = [
-        (CHEF, 'Chef'),
-        (SOUS_CHEF, 'Sous-chef'),
-        (COOK, 'Cook'),
-        (AMATEUR, 'Amateur')
-    ]
     email = models.EmailField(unique=True)
-    cook_status = models.CharField(max_length=2,
-                                   choices=COOKING_STATUS_TITLES, default=AMATEUR)
     image = models.ImageField(upload_to='users/images',
                               validators=[validate_image])
