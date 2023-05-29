@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
+    path('', include('recipes.urls'))
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL,
