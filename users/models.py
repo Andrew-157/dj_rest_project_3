@@ -3,8 +3,8 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 
 
-def validate_image(image):
-    file_size = image.file.size
+def validate_image(file):
+    file_size = file.size
     limit_kb = 500
     if file_size > limit_kb * 1024:
         raise ValidationError(f"Maximum size of the image is {limit_kb} KB")
@@ -17,5 +17,5 @@ def validate_image(image):
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
-    image = models.ImageField(upload_to='users/images',
+    image = models.ImageField(upload_to='users/images/',
                               validators=[validate_image])
