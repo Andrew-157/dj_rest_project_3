@@ -1,10 +1,11 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework import filters
 from rest_framework.exceptions import NotFound, MethodNotAllowed
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
-from recipes.models import Category, Recipe, Ingredient
-from recipes.serializers import CategorySerializer, RecipeSerializer, CreateUpdateRecipeSerializer, IngredientSerializer
-from recipes.permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
+from recipes.models import Category, Recipe, Ingredient, RecipeImage
+from recipes.serializers import CategorySerializer, RecipeSerializer, \
+    CreateUpdateRecipeSerializer, IngredientSerializer, RecipeImageSerializer
+from recipes.permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly, IsParentObjectAuthorOrReadOnly
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -47,7 +48,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.select_related('recipe').all()
     serializer_class = IngredientSerializer
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         recipe_pk = self.kwargs['recipe_pk']
@@ -59,3 +60,35 @@ class IngredientViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author_id=self.request.user.id,
                         recipe_id=self.kwargs['recipe_pk'])
+
+
+class RecipeImageViewSet(mixins.ListModelMixin,
+                         mixins.RetrieveModelMixin,
+                         mixins.CreateModelMixin,
+                         mixins.DestroyModelMixin,
+                         viewsets.GenericViewSet):
+    queryset = RecipeImage.objects.select_related('recipe').all()
+    serializer_class = RecipeImageSerializer
+    permission_classes = [
+        IsParentObjectAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        recipe_pk = self.kwargs['recipe_pk']
+        recipe = Recipe.objects.filter(pk=recipe_pk).first()
+        if not recipe:
+            raise NotFound(detail=f'Recipe with id {recipe_pk} was not found')
+        return super().get_queryset()
+
+    def perform_create(self, serializer):
+        recipe_pk = self.kwargs['recipe_pk']
+        number_of_images = RecipeImage.objects.filter(
+            recipe__id=recipe_pk).count()
+        print(number_of_images)
+        max_number_of_images = 3
+        if number_of_images == max_number_of_images:
+            raise MethodNotAllowed(
+                method='POST',
+                detail=f'The recipe already has the maximum number of images {max_number_of_images}'
+            )
+        else:
+            serializer.save(recipe_id=self.kwargs['recipe_pk'])

@@ -13,6 +13,9 @@ recipes_router = routers.NestedSimpleRouter(
 recipes_router.register(
     r'ingredients', views.IngredientViewSet, basename='recipe-ingredient'
 )
+recipes_router.register(
+    r'images', views.RecipeImageViewSet, basename='recipe-image'
+)
 
 urlpatterns = [
     path('', include(router.urls)),
