@@ -101,29 +101,36 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         model = Recipe
         fields = [
             'url', 'id', 'title', 'slug', 'author',
-            'category', 'instructions', 'ingredients', 'images'
+            'category', 'instructions', 'number_of_ingredients', 'ingredients', 'images'
         ]
+
+    number_of_ingredients = serializers.SerializerMethodField(
+        method_name='count_ingredients'
+    )
+
+    def count_ingredients(self, recipe: Recipe):
+        return Ingredient.objects.filter(recipe__id=recipe.id).count()
 
 
 class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
-    ingredients = NestedHyperlinkedRelatedField(
-        many=True,
-        read_only=True,
-        view_name='recipe-ingredient-detail',
-        parent_lookup_kwargs={'recipe_pk': 'recipe__pk'}
-    )
-    images = NestedHyperlinkedRelatedField(
-        many=True,
-        read_only=True,
-        view_name='recipe-image-detail',
-        parent_lookup_kwargs={
-            'recipe_pk': 'recipe__pk'
-        }
-    )
+    # ingredients = NestedHyperlinkedRelatedField(
+    #     many=True,
+    #     read_only=True,
+    #     view_name='recipe-ingredient-detail',
+    #     parent_lookup_kwargs={'recipe_pk': 'recipe__pk'}
+    # )
+    # images = NestedHyperlinkedRelatedField(
+    #     many=True,
+    #     read_only=True,
+    #     view_name='recipe-image-detail',
+    #     parent_lookup_kwargs={
+    #         'recipe_pk': 'recipe__pk'
+    #     }
+    # )
 
     class Meta:
         model = Recipe
         fields = [
-            'url', 'id', 'title', 'author', 'category', 'instructions', 'ingredients', 'images'
+            'url', 'id', 'title', 'author', 'category', 'instructions'
         ]
