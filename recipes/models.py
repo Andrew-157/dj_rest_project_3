@@ -2,6 +2,7 @@ from django.db import models
 from django.template.defaultfilters import slugify
 from django.core.validators import MinValueValidator
 from users.models import CustomUser
+from recipes.validators import validate_file_size
 
 
 class Category(models.Model):
@@ -66,3 +67,10 @@ class Ingredient(models.Model):
 
     class Meta:
         ordering = ['name']
+
+
+class RecipeImage(models.Model):
+    recipe = models.ForeignKey(
+        Recipe, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(
+        upload_to='recipes/images/', validators=[validate_file_size])

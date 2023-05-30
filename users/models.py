@@ -4,10 +4,10 @@ from django.contrib.auth.models import AbstractUser
 
 
 def validate_image(file):
-    file_size = file.size
-    limit_kb = 500
-    if file_size > limit_kb * 1024:
-        raise ValidationError(f"Maximum size of the image is {limit_kb} KB")
+    max_kb_size = 500
+
+    if file.size > max_kb_size * 1024:
+        raise ValidationError(f'Files cannot be larger than {max_kb_size}KB')
 
     # file_size = image.file.size
     # limit_mb = 8
