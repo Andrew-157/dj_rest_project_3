@@ -48,7 +48,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.select_related('recipe').all()
     serializer_class = IngredientSerializer
-    permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        IsParentObjectAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         recipe_pk = self.kwargs['recipe_pk']
@@ -58,8 +59,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
         return super().get_queryset()
 
     def perform_create(self, serializer):
-        serializer.save(author_id=self.request.user.id,
-                        recipe_id=self.kwargs['recipe_pk'])
+        serializer.save(recipe_id=self.kwargs['recipe_pk'])
 
 
 class RecipeImageViewSet(mixins.ListModelMixin,
