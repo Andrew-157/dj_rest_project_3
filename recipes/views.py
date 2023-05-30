@@ -1,8 +1,9 @@
 from rest_framework import viewsets
 from rest_framework import filters
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from recipes.models import Category, Recipe
-from recipes.serializers import CategorySerializer, RecipeSerializer
+from rest_framework.exceptions import NotFound
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
+from recipes.models import Category, Recipe, Ingredient
+from recipes.serializers import CategorySerializer, RecipeSerializer, CreateUpdateRecipeSerializer, IngredientSerializer
 from recipes.permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
 
 
@@ -16,9 +17,39 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.select_related('category').all()
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'slug', 'category']
+    ordering_fields = ['title', 'slug', 'category']
+
+    def get_serializer_class(self):
+        # We want user not to enter slug field
+        # when posting a recipe as it is done automatically,
+        # so RecipeSerializer that is called for safe methods contains slug
+        # field and CreateUpdateSerializer does not
+        if self.request.method in SAFE_METHODS:
+            return RecipeSerializer
+        else:
+            return CreateUpdateRecipeSerializer
 
     def perform_create(self, serializer):
         serializer.save(author_id=self.request.user.id)
+
+
+class IngredientViewSet(viewsets.ModelViewSet):
+    queryset = Ingredient.objects.select_related('recipe').all()
+    serializer_class = IngredientSerializer
+    permission_classes = [IsAuthorOrReadOnly]
+
+    def get_queryset(self):
+        recipe_pk = self.kwargs['recipe_pk']
+        recipe = Recipe.objects.filter(pk=recipe_pk).first()
+        if not recipe:
+            raise NotFound(detail=f'Recipe with id {recipe_pk} was not found')
+        return super().get_queryset()
+
+    def perform_create(self, serializer):
+        serializer.save(author_id=self.request.user.id,
+                        recipe_id=self.kwargs['recipe_pk'])

@@ -56,6 +56,8 @@ class Ingredient(models.Model):
                                             choices=UNITS_OF_MEASUREMENT, null=True)
     recipe = models.ForeignKey(
         Recipe, related_name='ingredients', on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        CustomUser, related_name='ingredients', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
