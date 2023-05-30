@@ -52,7 +52,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
     permission_classes = [
         IsParentObjectAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
 
-    def get_serializer(self, *args, **kwargs):
+    def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
             return IngredientSerializer
         else:
