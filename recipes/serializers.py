@@ -46,6 +46,14 @@ class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
         view_name='recipe-ingredient-detail',
         parent_lookup_kwargs={'recipe_pk': 'recipe__pk'}
     )
+    images = NestedHyperlinkedRelatedField(
+        many=True,
+        read_only=True,
+        view_name='recipe-image-detail',
+        parent_lookup_kwargs={
+            'recipe_pk': 'recipe__pk'
+        }
+    )
 
     class Meta:
         model = Recipe
