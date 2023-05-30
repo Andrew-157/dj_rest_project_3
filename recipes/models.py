@@ -1,5 +1,6 @@
 from django.db import models
 from django.template.defaultfilters import slugify
+from django.core.validators import MinValueValidator
 from users.models import CustomUser
 
 
@@ -50,7 +51,8 @@ class Ingredient(models.Model):
     name = models.CharField(max_length=155)
     quantity = models.DecimalField(
         max_digits=6,
-        decimal_places=2
+        decimal_places=2,
+        validators=[MinValueValidator(1)]
     )
     units_of_measurement = models.CharField(max_length=2,
                                             choices=UNITS_OF_MEASUREMENT, null=True)
