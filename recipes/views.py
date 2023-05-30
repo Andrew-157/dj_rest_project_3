@@ -1,3 +1,4 @@
+from django.db.models.query_utils import Q
 from rest_framework import viewsets, mixins
 from rest_framework import filters
 from rest_framework.exceptions import NotFound, MethodNotAllowed
@@ -59,7 +60,34 @@ class IngredientViewSet(viewsets.ModelViewSet):
         return super().get_queryset()
 
     def perform_create(self, serializer):
+        # we check if the recipe already has an ingredient with
+        # the name that the user enters
+        # if it does, we do not allow method
+        ingredient_name = str(self.request.data['name']).lower()
+        ingredient = Ingredient.objects.filter(
+            Q(name=ingredient_name) &
+            Q(recipe__id=self.kwargs['recipe_pk'])
+        ).first()
+        if ingredient:
+            raise MethodNotAllowed(method='POST',
+                                   detail=f'Ingredient for this recipe with this name already exists')
         serializer.save(recipe_id=self.kwargs['recipe_pk'])
+
+    def perform_update(self, serializer):
+        # we check if the recipe has an ingredient with
+        # the name that the user enters
+        # if this ingredient is the one that is being updated
+        # than we do nothing, if it is not, we do not allow method
+        ingredient = Ingredient.objects.filter(pk=self.kwargs['pk']).first()
+        ingredient_name = str(self.request.data['name']).lower()
+        ingredient_with_name = Ingredient.objects.filter(
+            Q(name=ingredient_name) &
+            Q(recipe__id=self.kwargs['recipe_pk'])
+        ).first()
+        if ingredient_with_name and (ingredient_with_name != ingredient):
+            raise MethodNotAllowed(method='PUT',
+                                   detail=f'Ingredient for this recipe with this name already exists')
+        return super().perform_update(serializer)
 
 
 class RecipeImageViewSet(mixins.ListModelMixin,
@@ -83,7 +111,6 @@ class RecipeImageViewSet(mixins.ListModelMixin,
         recipe_pk = self.kwargs['recipe_pk']
         number_of_images = RecipeImage.objects.filter(
             recipe__id=recipe_pk).count()
-        print(number_of_images)
         max_number_of_images = 3
         if number_of_images == max_number_of_images:
             raise MethodNotAllowed(
