@@ -13,6 +13,50 @@ class CategorySerializer(serializers.HyperlinkedModelSerializer):
         ]
 
 
+class IngredientSerializer(NestedHyperlinkedModelSerializer):
+    url = NestedHyperlinkedIdentityField(
+        view_name='recipe-ingredient-detail',
+        lookup_field='pk',
+        parent_lookup_kwargs={
+            'recipe_pk': 'recipe__pk'
+        }
+    )
+
+    recipe_title = serializers.ReadOnlyField(source='recipe.title')
+    recipe = serializers.HyperlinkedRelatedField(
+        view_name='recipe-detail', read_only=True
+    )
+
+    class Meta:
+        model = Ingredient
+        fields = [
+            'url', 'id', 'name', 'quantity',
+            'units_of_measurement', 'recipe_title',
+            'recipe'
+        ]
+
+
+class RecipeImageSerializer(NestedHyperlinkedModelSerializer):
+    url = NestedHyperlinkedIdentityField(
+        view_name='recipe-image-detail',
+        lookup_field='pk',
+        parent_lookup_kwargs={
+            'recipe_pk': 'recipe__pk'
+        }
+    )
+
+    recipe_title = serializers.ReadOnlyField(source='recipe.title')
+    recipe = serializers.HyperlinkedRelatedField(
+        view_name='recipe-detail', read_only=True
+    )
+
+    class Meta:
+        model = RecipeImage
+        fields = [
+            'url', 'id', 'image', 'recipe_title', 'recipe'
+        ]
+
+
 class RecipeSerializer(serializers.HyperlinkedModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
     ingredients = NestedHyperlinkedRelatedField(
@@ -59,48 +103,4 @@ class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
         model = Recipe
         fields = [
             'url', 'id', 'title', 'author', 'category', 'instructions', 'ingredients', 'images'
-        ]
-
-
-class IngredientSerializer(NestedHyperlinkedModelSerializer):
-    url = NestedHyperlinkedIdentityField(
-        view_name='recipe-ingredient-detail',
-        lookup_field='pk',
-        parent_lookup_kwargs={
-            'recipe_pk': 'recipe__pk'
-        }
-    )
-
-    recipe_title = serializers.ReadOnlyField(source='recipe.title')
-    recipe = serializers.HyperlinkedRelatedField(
-        view_name='recipe-detail', read_only=True
-    )
-
-    class Meta:
-        model = Ingredient
-        fields = [
-            'url', 'id', 'name', 'quantity',
-            'units_of_measurement', 'recipe_title',
-            'recipe'
-        ]
-
-
-class RecipeImageSerializer(NestedHyperlinkedModelSerializer):
-    url = NestedHyperlinkedIdentityField(
-        view_name='recipe-image-detail',
-        lookup_field='pk',
-        parent_lookup_kwargs={
-            'recipe_pk': 'recipe__pk'
-        }
-    )
-
-    recipe_title = serializers.ReadOnlyField(source='recipe.title')
-    recipe = serializers.HyperlinkedRelatedField(
-        view_name='recipe-detail', read_only=True
-    )
-
-    class Meta:
-        model = RecipeImage
-        fields = [
-            'url', 'id', 'image', 'recipe_title', 'recipe'
         ]
