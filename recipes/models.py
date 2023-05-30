@@ -55,7 +55,7 @@ class Ingredient(models.Model):
     units_of_measurement = models.CharField(max_length=2,
                                             choices=UNITS_OF_MEASUREMENT, null=True)
     recipe = models.ForeignKey(
-        Recipe, related_name='ingredients', on_delete=models.CASCADE, null=True)
+        Recipe, related_name='ingredients', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
