@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from rest_framework import filters
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, MethodNotAllowed
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 from recipes.models import Category, Recipe, Ingredient
 from recipes.serializers import CategorySerializer, RecipeSerializer, CreateUpdateRecipeSerializer, IngredientSerializer
@@ -14,6 +14,12 @@ class CategoryViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'slug']
     ordering_fields = ['title', 'slug']
+
+    def destroy(self, request, *args, **kwargs):
+        if Recipe.objects.filter(category_id=self.kwargs['pk']):
+            raise MethodNotAllowed(method='DELETE',
+                                   detail='There are recipes associated with this category, cannot delete it.')
+        return super().destroy(request, *args, **kwargs)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
