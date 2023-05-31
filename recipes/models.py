@@ -24,6 +24,7 @@ class Recipe(models.Model):
     slug = models.SlugField(max_length=155, unique=True, blank=True)
     category = models.ForeignKey(Category,
                                  on_delete=models.PROTECT, related_name='recipes')
+    published = models.DateTimeField(auto_now_add=True, null=True)
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title)
@@ -77,3 +78,18 @@ class RecipeImage(models.Model):
         Recipe, related_name='images', on_delete=models.CASCADE)
     image = models.ImageField(
         upload_to='recipes/images/', validators=[validate_file_size])
+
+    class Meta:
+        ordering = ['id']
+
+
+class Review(models.Model):
+    recipe = models.ForeignKey(
+        Recipe, related_name='reviews', on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        CustomUser, related_name='reviews', on_delete=models.CASCADE)
+    content = models.TextField()
+    published = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['published']
