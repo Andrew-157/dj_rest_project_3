@@ -49,6 +49,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author_id=self.request.user.id)
 
+    @action(detail=True, methods=['GET', 'HEAD', 'OPTIONS'])
+    def get_reviews(self, request, *args, **kwargs):
+        recipe = self.get_object()
+        reviews_list = []
+        reviews = Review.objects.\
+            select_related('author').select_related('recipe').\
+            filter(recipe__id=recipe.id).all()
+        for review in reviews:
+            reviews_list.append(
+                f'{review.content} | Was left by {review.author} on {review.published}')
+        return Response(reviews_list)
+
 
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.select_related('recipe').all()

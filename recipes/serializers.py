@@ -79,11 +79,12 @@ class RecipeImageSerializer(NestedHyperlinkedModelSerializer):
             'url', 'id', 'image', 'recipe_title', 'recipe'
         ]
 
+
 class ReviewSerializer(NestedHyperlinkedModelSerializer):
     url = NestedHyperlinkedIdentityField(
         view_name='recipe-review-detail',
-        lookup_field = 'pk',
-        parent_lookup_kwargs = {
+        lookup_field='pk',
+        parent_lookup_kwargs={
             'recipe_pk': 'recipe__pk'
         }
     )
@@ -97,7 +98,7 @@ class ReviewSerializer(NestedHyperlinkedModelSerializer):
     class Meta:
         model = Review
         fields = [
-            'url', 'id', 'content', 'author','published', 'recipe_title', 'recipe'
+            'url', 'id', 'content', 'author', 'published', 'recipe_title', 'recipe'
         ]
 
 
@@ -117,16 +118,19 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
             'recipe_pk': 'recipe__pk'
         }
     )
+    get_reviews = serializers.HyperlinkedIdentityField(
+        view_name='recipe-get-reviews', read_only=True
+    )
 
     class Meta:
         model = Recipe
         fields = [
             'url', 'id', 'title', 'slug', 'author',
-            'category', 'instructions', 'ingredients_list',
-            'ingredients', 'images'
+            'category', 'instructions', 'list_ingredients',
+            'ingredients', 'images', 'reviews_number', 'get_reviews'
         ]
 
-    ingredients_list = serializers.SerializerMethodField(
+    list_ingredients = serializers.SerializerMethodField(
         method_name='get_ingredients'
     )
 
@@ -140,6 +144,13 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
             else:
                 ingredients_list.append(f'{ing.quantity} {ing.name.lower()}')
         return ingredients_list
+
+    reviews_number = serializers.SerializerMethodField(
+        method_name='count_reviews'
+    )
+
+    def count_reviews(self, recipe: Recipe):
+        return Review.objects.filter(recipe__id=recipe.id).count()
 
 
 class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
