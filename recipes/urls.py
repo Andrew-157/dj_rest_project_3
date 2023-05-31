@@ -16,6 +16,9 @@ recipes_router.register(
 recipes_router.register(
     r'images', views.RecipeImageViewSet, basename='recipe-image'
 )
+recipes_router.register(
+    r'reviews', views.ReviewViewSet, basename='recipe-review'
+)
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -5,9 +5,10 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, MethodNotAllowed
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
-from recipes.models import Category, Recipe, Ingredient, RecipeImage
+from recipes.models import Category, Recipe, Ingredient, RecipeImage, Review
 from recipes.serializers import CategorySerializer, RecipeSerializer, \
-    CreateUpdateRecipeSerializer, IngredientSerializer, CreateUpdateIngredientSerializer, RecipeImageSerializer
+    CreateUpdateRecipeSerializer, IngredientSerializer, \
+    CreateUpdateIngredientSerializer, RecipeImageSerializer, ReviewSerializer
 from recipes.permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly, IsParentObjectAuthorOrReadOnly
 
 
@@ -27,7 +28,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.select_related('category').all()
+    queryset = Recipe.objects.select_related('category').\
+        select_related('author').all()
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -114,7 +116,8 @@ class RecipeImageViewSet(mixins.ListModelMixin,
         recipe = Recipe.objects.filter(pk=recipe_pk).first()
         if not recipe:
             raise NotFound(detail=f'Recipe with id {recipe_pk} was not found')
-        return super().get_queryset()
+        return RecipeImage.objects.\
+            select_related('recipe').filter(recipe=recipe).all()
 
     def perform_create(self, serializer):
         recipe_pk = self.kwargs['recipe_pk']
@@ -128,3 +131,39 @@ class RecipeImageViewSet(mixins.ListModelMixin,
             )
         else:
             serializer.save(recipe_id=self.kwargs['recipe_pk'])
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.select_related('recipe').\
+        select_related('author').all()
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        recipe_pk = self.kwargs['recipe_pk']
+        recipe = Recipe.objects.filter(pk=recipe_pk).first()
+        if not recipe:
+            raise NotFound(
+                detail=f'Recipe with id {recipe_pk} was not found'
+            )
+        return Review.objects.select_related('recipe').\
+            select_related('author').filter(recipe=recipe).all()
+
+    def perform_create(self, serializer):
+        recipe_pk = self.kwargs['recipe_pk']
+        author_pk = self.request.user.id
+        review = Review.objects.select_related('recipe').\
+            select_related('author').filter(
+                Q(recipe__id=recipe_pk) &
+                Q(author__id=author_pk)
+        ).first()
+        if review:
+            raise MethodNotAllowed(
+                method='POST',
+                detail='User cannot create more than one review per recipe'
+            )
+        else:
+            serializer.save(
+                recipe_id=recipe_pk,
+                author_id=author_pk
+            )
