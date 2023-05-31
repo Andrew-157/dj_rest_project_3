@@ -92,4 +92,20 @@ class Review(models.Model):
     published = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['published']
+        ordering = ['-published']
+
+
+class Rating(models.Model):
+    rating_choices = [(0, 0), (1, 1), (2, 2),
+                      (3, 3), (4, 4), (5, 5),
+                      (6, 6), (7, 7), (8, 8),
+                      (9, 9), (10, 10)]
+    recipe = models.ForeignKey(
+        Recipe, related_name='ratings', on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        CustomUser, related_name='ratings', on_delete=models.CASCADE)
+    value = models.PositiveSmallIntegerField(choices=rating_choices)
+    published = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-published']
