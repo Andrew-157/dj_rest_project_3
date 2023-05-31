@@ -101,15 +101,25 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         model = Recipe
         fields = [
             'url', 'id', 'title', 'slug', 'author',
-            'category', 'instructions', 'number_of_ingredients', 'ingredients', 'images'
+            'category', 'instructions', 'ingredients_list',
+            'ingredients', 'images'
         ]
 
-    number_of_ingredients = serializers.SerializerMethodField(
-        method_name='count_ingredients'
+    ingredients_list = serializers.SerializerMethodField(
+        method_name='get_ingredients'
     )
 
-    def count_ingredients(self, recipe: Recipe):
-        return Ingredient.objects.filter(recipe__id=recipe.id).count()
+    def get_ingredients(self, recipe: Recipe):
+        ingredients = Ingredient.objects.filter(recipe__id=recipe.id).all()
+        ingredients_list = []
+        for ing in ingredients:
+            if ing.units_of_measurement:
+                ingredients_list.append(
+                    f'{ing.quantity} {ing.units_of_measurement} of {ing.name.lower()}')
+            else:
+                ingredients_list.append(
+                    f'{int(ing.quantity)} {ing.name.lower()}')
+        return ingredients_list
 
 
 class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):

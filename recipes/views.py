@@ -1,7 +1,9 @@
 from django.db.models.query_utils import Q
 from rest_framework import viewsets, mixins
 from rest_framework import filters
+from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, MethodNotAllowed
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 from recipes.models import Category, Recipe, Ingredient, RecipeImage
 from recipes.serializers import CategorySerializer, RecipeSerializer, \
@@ -63,7 +65,8 @@ class IngredientViewSet(viewsets.ModelViewSet):
         recipe = Recipe.objects.filter(pk=recipe_pk).first()
         if not recipe:
             raise NotFound(detail=f'Recipe with id {recipe_pk} was not found')
-        return super().get_queryset()
+        return Ingredient.objects.select_related('recipe').\
+            filter(recipe=recipe).all()
 
     def perform_create(self, serializer):
         # we check if the recipe already has an ingredient with
