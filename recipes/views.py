@@ -38,7 +38,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                        filters.OrderingFilter, DjangoFilterBackend]
     search_fields = ['title', 'slug', 'category__title',
                      'category__slug', 'author__username']
-    ordering_fields = ['title', 'slug', 'published', 'category', 'author']
+    ordering_fields = ['title', 'slug', 'published',
+                       'category__title', 'author__username']
 
     def get_serializer_class(self):
         # We want user not to enter slug field
@@ -73,8 +74,8 @@ class IngredientViewSet(viewsets.ModelViewSet):
         IsParentObjectAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter,
                        filters.OrderingFilter, DjangoFilterBackend]
-    search_fields = ['name', 'slug']
-    ordering_fields = ['name', 'slug']
+    search_fields = ['name', 'slug', 'recipe__title']
+    ordering_fields = ['name', 'slug', 'recipe__title']
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
@@ -158,6 +159,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
         select_related('author').all()
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter,
+                       filters.OrderingFilter, DjangoFilterBackend]
+    search_fields = ['author__username']
+    ordering_fields = ['author__username', 'published']
 
     def get_queryset(self):
         recipe_pk = self.kwargs['recipe_pk']
