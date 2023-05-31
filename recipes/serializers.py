@@ -117,8 +117,7 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
                 ingredients_list.append(
                     f'{ing.quantity} {ing.units_of_measurement} of {ing.name.lower()}')
             else:
-                ingredients_list.append(
-                    f'{int(ing.quantity)} {ing.name.lower()}')
+                ingredients_list.append(f'{ing.quantity} {ing.name.lower()}')
         return ingredients_list
 
 
