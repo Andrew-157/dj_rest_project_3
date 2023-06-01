@@ -25,7 +25,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         if Recipe.objects.filter(category_id=self.kwargs['pk']):
             raise MethodNotAllowed(method='DELETE',
-                                   detail='There are recipes associated with this category, cannot delete it.')
+                                   detail='There are recipes associated with this category, cannot be deleted.')
         return super().destroy(request, *args, **kwargs)
 
 
