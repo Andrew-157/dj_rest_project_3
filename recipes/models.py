@@ -101,7 +101,7 @@ class Rating(models.Model):
                       (6, 6), (7, 7), (8, 8),
                       (9, 9), (10, 10)]
     recipe = models.ForeignKey(
-        Recipe, related_name='ratings', on_delete=models.CASCADE)
+        'recipes.Recipe', related_name='ratings', on_delete=models.CASCADE)
     author = models.ForeignKey(
         CustomUser, related_name='ratings', on_delete=models.CASCADE)
     value = models.PositiveSmallIntegerField(choices=rating_choices)
