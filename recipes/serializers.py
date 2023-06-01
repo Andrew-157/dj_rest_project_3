@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework_nested.relations import NestedHyperlinkedIdentityField, NestedHyperlinkedRelatedField
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
-from recipes.models import Category, Recipe, Ingredient, RecipeImage, Review
+from recipes.models import Category, Recipe, Ingredient, RecipeImage, Review, Rating
 
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
@@ -99,6 +99,28 @@ class ReviewSerializer(NestedHyperlinkedModelSerializer):
         model = Review
         fields = [
             'url', 'id', 'content', 'author', 'published', 'recipe_title', 'recipe'
+        ]
+
+
+class RatingSerializer(NestedHyperlinkedModelSerializer):
+    url = NestedHyperlinkedIdentityField(
+        view_name='recipe-rating-detail',
+        lookup_field='pk',
+        parent_lookup_kwargs={
+            'recipe_pk': 'recipe__pk'
+        }
+    )
+
+    recipe_title = serializers.ReadOnlyField(source='recipe.title')
+    recipe = serializers.HyperlinkedRelatedField(
+        view_name='recipe-detail', read_only=True
+    )
+    author = serializers.ReadOnlyField(source='author.username')
+
+    class Meta:
+        model = Rating
+        fields = [
+            'url', 'id', 'value', 'author', 'published', 'recipe_title', 'recipe'
         ]
 
 
