@@ -114,12 +114,16 @@ class ReviewSerializer(NestedHyperlinkedModelSerializer):
     recipe = serializers.HyperlinkedRelatedField(
         view_name='recipe-detail', read_only=True
     )
-    author = serializers.ReadOnlyField(source='author.username')
+    author_name = serializers.ReadOnlyField(source='author.username')
+    author = serializers.HyperlinkedRelatedField(
+        view_name='author-detail', read_only=True
+    )
 
     class Meta:
         model = Review
         fields = [
-            'url', 'id', 'content', 'author', 'published', 'recipe_title', 'recipe'
+            'url', 'id', 'content', 'author_name', 'author',
+            'published', 'recipe_title', 'recipe'
         ]
 ########################################################################
 ########################################################################
@@ -138,19 +142,26 @@ class RatingSerializer(NestedHyperlinkedModelSerializer):
     recipe = serializers.HyperlinkedRelatedField(
         view_name='recipe-detail', read_only=True
     )
-    author = serializers.ReadOnlyField(source='author.username')
+    author_name = serializers.ReadOnlyField(source='author.username')
+    author = serializers.HyperlinkedRelatedField(
+        view_name='author-detail', read_only=True
+    )
 
     class Meta:
         model = Rating
         fields = [
-            'url', 'id', 'value', 'author', 'published', 'recipe_title', 'recipe'
+            'url', 'id', 'value', 'author_name',
+            'author', 'published', 'recipe_title', 'recipe'
         ]
 ########################################################################
 ########################################################################
 
 
 class RecipeSerializer(serializers.HyperlinkedModelSerializer):
-    author = serializers.ReadOnlyField(source='author.username')
+    author_name = serializers.ReadOnlyField(source='author.username')
+    author = serializers.HyperlinkedRelatedField(
+        view_name='author-detail', read_only=True
+    )
     category = CategorySerializer()
     ingredients = NestedHyperlinkedRelatedField(
         many=True,
@@ -173,7 +184,7 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Recipe
         fields = [
-            'url', 'id', 'title', 'slug', 'author',
+            'url', 'id', 'title', 'slug', 'author_name', 'author',
             'category', 'instructions', 'published', 'list_ingredients',
             'ingredients', 'images', 'reviews_number', 'get_reviews', 'rating'
         ]
@@ -217,12 +228,16 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
-    author = serializers.ReadOnlyField(source='author.username')
+    author_name = serializers.ReadOnlyField(source='author.username')
+    author = serializers.HyperlinkedRelatedField(
+        view_name='author-detail', read_only=True
+    )
 
     class Meta:
         model = Recipe
         fields = [
-            'url', 'id', 'title', 'author', 'category', 'instructions', 'published'
+            'url', 'id', 'title', 'author_name', 'author',
+            'category', 'instructions', 'published'
         ]
 ########################################################################
 ########################################################################
@@ -233,10 +248,14 @@ class AuthorSerializer(serializers.HyperlinkedModelSerializer):
         view_name='author-detail', read_only=True
     )
 
+    get_recipes = serializers.HyperlinkedIdentityField(
+        view_name='author-get-recipes', read_only=True
+    )
+
     class Meta:
         model = CustomUser
         fields = [
-            'url', 'id', 'username', 'image', 'number_of_recipes'
+            'url', 'id', 'username', 'image', 'number_of_recipes', 'get_recipes'
         ]
 
     number_of_recipes = serializers.SerializerMethodField(

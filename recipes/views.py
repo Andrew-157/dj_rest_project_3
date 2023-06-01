@@ -250,3 +250,15 @@ class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
                        filters.OrderingFilter, DjangoFilterBackend]
     searching_fields = ['username']
     ordering_fields = ['username']
+
+    @action(detail=True, methods=['HEAD', 'OPTIONS', 'GET'])
+    def get_recipes(self, request, *args, **kwargs):
+        """
+        Recipes published only by a particular author
+        """
+        author = self.get_object()
+        recipes = Recipe.objects.select_related('author', 'category').\
+            filter(author__id=author.id).all()
+        serializer = RecipeSerializer(
+            recipes, many=True, context={'request': request})
+        return Response(serializer.data)
