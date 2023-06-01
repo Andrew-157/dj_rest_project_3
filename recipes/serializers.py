@@ -24,6 +24,8 @@ class CategorySerializer(serializers.HyperlinkedModelSerializer):
 
     def count_recipes(self, category: Category):
         return Recipe.objects.filter(category__id=category.id).count()
+########################################################################
+########################################################################
 
 
 class IngredientSerializer(NestedHyperlinkedModelSerializer):
@@ -47,6 +49,8 @@ class IngredientSerializer(NestedHyperlinkedModelSerializer):
             'units_of_measurement', 'recipe_title',
             'recipe'
         ]
+########################################################################
+########################################################################
 
 
 class CreateUpdateIngredientSerializer(NestedHyperlinkedModelSerializer):
@@ -70,6 +74,8 @@ class CreateUpdateIngredientSerializer(NestedHyperlinkedModelSerializer):
             'units_of_measurement', 'recipe_title',
             'recipe'
         ]
+########################################################################
+########################################################################
 
 
 class RecipeImageSerializer(NestedHyperlinkedModelSerializer):
@@ -91,6 +97,8 @@ class RecipeImageSerializer(NestedHyperlinkedModelSerializer):
         fields = [
             'url', 'id', 'image', 'recipe_title', 'recipe'
         ]
+########################################################################
+########################################################################
 
 
 class ReviewSerializer(NestedHyperlinkedModelSerializer):
@@ -113,6 +121,8 @@ class ReviewSerializer(NestedHyperlinkedModelSerializer):
         fields = [
             'url', 'id', 'content', 'author', 'published', 'recipe_title', 'recipe'
         ]
+########################################################################
+########################################################################
 
 
 class RatingSerializer(NestedHyperlinkedModelSerializer):
@@ -135,6 +145,8 @@ class RatingSerializer(NestedHyperlinkedModelSerializer):
         fields = [
             'url', 'id', 'value', 'author', 'published', 'recipe_title', 'recipe'
         ]
+########################################################################
+########################################################################
 
 
 class RecipeSerializer(serializers.HyperlinkedModelSerializer):
@@ -200,6 +212,8 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
             return rating['average_rating']
         else:
             return 'Recipe has not been rated by anyone yet'
+########################################################################
+########################################################################
 
 
 class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
@@ -210,6 +224,8 @@ class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
         fields = [
             'url', 'id', 'title', 'author', 'category', 'instructions', 'published'
         ]
+########################################################################
+########################################################################
 
 
 class AuthorSerializer(serializers.HyperlinkedModelSerializer):
