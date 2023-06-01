@@ -10,8 +10,15 @@ class CategorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Category
         fields = [
-            'url', 'id', 'title', 'slug'
+            'url', 'id', 'title', 'slug', 'recipes_in_category'
         ]
+
+    recipes_in_category = serializers.SerializerMethodField(
+        method_name='count_recipes'
+    )
+
+    def count_recipes(self, category: Category):
+        return Recipe.objects.filter(category__id=category.id).count()
 
 
 class IngredientSerializer(NestedHyperlinkedModelSerializer):
