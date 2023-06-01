@@ -33,7 +33,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def get_recipes(self, request, *args, **kwargs):
         category = self.get_object()
         recipes = Recipe.objects.\
-            select_related('category').select_related('author').\
+            select_related('category', 'author').\
             filter(category__id=category.id).all()
         if request.method == 'GET':
             serializer = RecipeSerializer(
@@ -42,8 +42,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.select_related('category').\
-        select_related('author').all()
+    queryset = Recipe.objects.select_related('category', 'author').all()
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter,
@@ -69,18 +68,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['GET', 'HEAD', 'OPTIONS'])
     def get_reviews(self, request, *args, **kwargs):
         recipe = self.get_object()
-        reviews_list = []
         reviews = Review.objects.\
-            select_related('author').select_related('recipe').\
+            select_related('author', 'recipe').\
             filter(recipe__id=recipe.id).all()
-        for review in reviews:
-            reviews_list.append(
-                f'{review.content} | Was left by {review.author} on {review.published}')
-        return Response(reviews_list)
+        serializer = ReviewSerializer(
+            reviews, many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
-    queryset = Ingredient.objects.select_related('recipe').all()
+    queryset = Ingredient.objects.select_related(
+        'recipe', 'recipe__category').all()
     serializer_class = IngredientSerializer
     permission_classes = [
         IsParentObjectAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
@@ -167,8 +165,7 @@ class RecipeImageViewSet(mixins.ListModelMixin,
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    queryset = Review.objects.select_related('recipe').\
-        select_related('author').all()
+    queryset = Review.objects.select_related('recipe', 'author').all()
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter,
@@ -183,14 +180,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
             raise NotFound(
                 detail=f'Recipe with id {recipe_pk} was not found'
             )
-        return Review.objects.select_related('recipe').\
-            select_related('author').filter(recipe=recipe).all()
+        return Review.objects.select_related('recipe', 'author').filter(recipe=recipe).all()
 
     def perform_create(self, serializer):
         recipe_pk = self.kwargs['recipe_pk']
         author_pk = self.request.user.id
-        review = Review.objects.select_related('recipe').\
-            select_related('author').filter(
+        review = Review.objects.select_related('recipe', 'author').\
+            filter(
                 Q(recipe__id=recipe_pk) &
                 Q(author__id=author_pk)
         ).first()
@@ -207,8 +203,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class RatingViewSet(viewsets.ModelViewSet):
-    queryset = Rating.objects.select_related('recipe').\
-        select_related('author').all()
+    queryset = Rating.objects.select_related('recipe', 'author').all()
     serializer_class = RatingSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter,
