@@ -1,3 +1,4 @@
+from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework_nested.relations import NestedHyperlinkedIdentityField, NestedHyperlinkedRelatedField
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
@@ -150,7 +151,7 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         fields = [
             'url', 'id', 'title', 'slug', 'author',
             'category', 'instructions', 'published', 'list_ingredients',
-            'ingredients', 'images', 'reviews_number', 'get_reviews'
+            'ingredients', 'images', 'reviews_number', 'get_reviews', 'rating'
         ]
 
     list_ingredients = serializers.SerializerMethodField(
@@ -174,6 +175,19 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
 
     def count_reviews(self, recipe: Recipe):
         return Review.objects.filter(recipe__id=recipe.id).count()
+
+    rating = serializers.SerializerMethodField(
+        method_name='count_ratings'
+    )
+
+    def count_ratings(self, recipe: Recipe):
+        rating = Rating.objects.filter(recipe__id=recipe.id).aggregate(
+            average_rating=Avg('value')
+        )
+        if rating['average_rating']:
+            return rating['average_rating']
+        else:
+            return 'Recipe has not been rated by anyone yet'
 
 
 class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
