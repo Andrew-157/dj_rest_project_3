@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Avg
 from django.template.defaultfilters import slugify
 from django.core.validators import MinValueValidator
 from users.models import CustomUser
@@ -14,6 +15,22 @@ class Category(models.Model):
 
     class Meta:
         ordering = ['title']
+
+
+class Rating(models.Model):
+    rating_choices = [(0, 0), (1, 1), (2, 2),
+                      (3, 3), (4, 4), (5, 5),
+                      (6, 6), (7, 7), (8, 8),
+                      (9, 9), (10, 10)]
+    recipe = models.ForeignKey(
+        'recipes.Recipe', related_name='ratings', on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        CustomUser, related_name='ratings', on_delete=models.CASCADE)
+    value = models.PositiveSmallIntegerField(choices=rating_choices)
+    published = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-published']
 
 
 class Recipe(models.Model):
@@ -35,6 +52,14 @@ class Recipe(models.Model):
 
     class Meta:
         ordering = ['title']
+
+    # @property
+    # def rating(self):
+    #     rating = Rating.objects.filter(recipe=self).aggregate(
+    #         average_rating=Avg('value')
+    #     )
+    #     if rating['average_rating']:
+    #         return rating['average_rating']
 
 
 class Ingredient(models.Model):
@@ -95,17 +120,17 @@ class Review(models.Model):
         ordering = ['-published']
 
 
-class Rating(models.Model):
-    rating_choices = [(0, 0), (1, 1), (2, 2),
-                      (3, 3), (4, 4), (5, 5),
-                      (6, 6), (7, 7), (8, 8),
-                      (9, 9), (10, 10)]
-    recipe = models.ForeignKey(
-        'recipes.Recipe', related_name='ratings', on_delete=models.CASCADE)
-    author = models.ForeignKey(
-        CustomUser, related_name='ratings', on_delete=models.CASCADE)
-    value = models.PositiveSmallIntegerField(choices=rating_choices)
-    published = models.DateTimeField(auto_now=True)
+# class Rating(models.Model):
+#     rating_choices = [(0, 0), (1, 1), (2, 2),
+#                       (3, 3), (4, 4), (5, 5),
+#                       (6, 6), (7, 7), (8, 8),
+#                       (9, 9), (10, 10)]
+#     recipe = models.ForeignKey(
+#         'recipes.Recipe', related_name='ratings', on_delete=models.CASCADE)
+#     author = models.ForeignKey(
+#         CustomUser, related_name='ratings', on_delete=models.CASCADE)
+#     value = models.PositiveSmallIntegerField(choices=rating_choices)
+#     published = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        ordering = ['-published']
+#     class Meta:
+#         ordering = ['-published']

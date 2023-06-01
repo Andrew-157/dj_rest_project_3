@@ -51,7 +51,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'slug', 'category__title',
                      'category__slug', 'author__username']
     ordering_fields = ['title', 'slug', 'published',
-                       'category__title', 'author__username']
+                       'category__title', 'author__username', 'rating']
 
     def get_serializer_class(self):
         # We want user not to enter slug field
