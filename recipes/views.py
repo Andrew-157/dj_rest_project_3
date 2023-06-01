@@ -2,6 +2,7 @@ from django.db.models.query_utils import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, mixins
 from rest_framework import filters
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, MethodNotAllowed
 from rest_framework.response import Response
@@ -27,6 +28,17 @@ class CategoryViewSet(viewsets.ModelViewSet):
             raise MethodNotAllowed(method='DELETE',
                                    detail='There are recipes associated with this category, cannot be deleted.')
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=['GET', 'HEAD', 'OPTIONS'])
+    def get_recipes(self, request, *args, **kwargs):
+        category = self.get_object()
+        recipes = Recipe.objects.\
+            select_related('category').select_related('author').\
+            filter(category__id=category.id).all()
+        if request.method == 'GET':
+            serializer = RecipeSerializer(
+                recipes, many=True, context={'request': request})
+            return Response(serializer.data)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

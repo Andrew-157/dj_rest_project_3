@@ -7,10 +7,14 @@ from recipes.models import Category, Recipe, Ingredient, RecipeImage, Review, Ra
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
 
+    get_recipes = serializers.HyperlinkedIdentityField(
+        view_name='category-get-recipes', read_only=True
+    )
+
     class Meta:
         model = Category
         fields = [
-            'url', 'id', 'title', 'slug', 'recipes_in_category'
+            'url', 'id', 'title', 'slug', 'recipes_in_category', 'get_recipes'
         ]
 
     recipes_in_category = serializers.SerializerMethodField(
