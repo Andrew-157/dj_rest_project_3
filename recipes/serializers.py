@@ -212,10 +212,20 @@ class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
         ]
 
 
-class AuthorSerializer(serializers.ModelSerializer):
+class AuthorSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='author-detail', read_only=True
+    )
 
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'username', 'image'
+            'url', 'id', 'username', 'image', 'number_of_recipes'
         ]
+
+    number_of_recipes = serializers.SerializerMethodField(
+        method_name='count_recipes'
+    )
+
+    def count_recipes(self, customuser: CustomUser):
+        return Recipe.objects.filter(author__id=customuser.id).count()

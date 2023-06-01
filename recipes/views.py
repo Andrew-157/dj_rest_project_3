@@ -246,3 +246,7 @@ class RatingViewSet(viewsets.ModelViewSet):
 class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CustomUser.objects.filter(is_superuser=False).all()
     serializer_class = AuthorSerializer
+    filter_backends = [filters.SearchFilter,
+                       filters.OrderingFilter, DjangoFilterBackend]
+    searching_fields = ['username']
+    ordering_fields = ['username']

@@ -19,3 +19,6 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     image = models.ImageField(upload_to='users/images/',
                               validators=[validate_file_size])
+
+    class Meta:
+        ordering = ['username']
