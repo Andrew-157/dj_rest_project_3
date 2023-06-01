@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework_nested.relations import NestedHyperlinkedIdentityField, NestedHyperlinkedRelatedField
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 from recipes.models import Category, Recipe, Ingredient, RecipeImage, Review, Rating
+from users.models import CustomUser
 
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
@@ -208,4 +209,13 @@ class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
         model = Recipe
         fields = [
             'url', 'id', 'title', 'author', 'category', 'instructions', 'published'
+        ]
+
+
+class AuthorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'username', 'image'
         ]

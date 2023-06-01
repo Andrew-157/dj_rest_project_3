@@ -10,8 +10,9 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 from recipes.models import Category, Recipe, Ingredient, RecipeImage, Review, Rating
 from recipes.serializers import CategorySerializer, RecipeSerializer, \
     CreateUpdateRecipeSerializer, IngredientSerializer, \
-    CreateUpdateIngredientSerializer, RecipeImageSerializer, ReviewSerializer, RatingSerializer
+    CreateUpdateIngredientSerializer, RecipeImageSerializer, ReviewSerializer, RatingSerializer, AuthorSerializer
 from recipes.permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly, IsParentObjectAuthorOrReadOnly
+from users.models import CustomUser
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -240,3 +241,8 @@ class RatingViewSet(viewsets.ModelViewSet):
                 recipe_id=recipe_pk,
                 author_id=author_pk
             )
+
+
+class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = CustomUser.objects.filter(is_superuser=False).all()
+    serializer_class = AuthorSerializer

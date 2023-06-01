@@ -6,6 +6,7 @@ from recipes import views
 router = DefaultRouter()
 router.register(r'categories', views.CategoryViewSet, basename='category')
 router.register(r'recipes', views.RecipeViewSet, basename='recipe')
+router.register(r'authors', views.AuthorViewSet, basename='author')
 
 recipes_router = routers.NestedSimpleRouter(
     router, r'recipes', lookup='recipe'
