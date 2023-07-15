@@ -1,5 +1,8 @@
+from typing import Any
 from django.contrib import admin
-from django.db.models import Avg
+from django.db.models import Avg, Count
+from django.db.models.query import QuerySet
+from django.http.request import HttpRequest
 from django.utils.html import format_html
 from recipes.models import Recipe, RecipeImage, Rating, Review, Category, Ingredient
 
@@ -7,7 +10,7 @@ from recipes.models import Recipe, RecipeImage, Rating, Review, Category, Ingred
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = [
-        'title', 'slug', 'recipes'
+        'title', 'slug',
     ]
     list_filter = [
         'title', 'slug'
@@ -16,52 +19,42 @@ class CategoryAdmin(admin.ModelAdmin):
         'title', 'slug'
     ]
 
-    def recipes(self, obj):
-        return Recipe.objects.\
-            filter(category__id=obj.id).count()
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+        return super().get_queryset(request)
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = [
         'title', 'instructions', 'slug',
-        'category', 'author', 'published',
-        'rating', 'reviews', 'ingredients'
+        'category', 'author', 'published'
     ]
 
     list_filter = [
         'category', 'published', 'author', 'title', 'slug'
     ]
     search_fields = [
-        'title',
+        'title', 'instructions'
     ]
 
     def get_queryset(self, request):
         return super().get_queryset(request).\
             select_related('category', 'author')
 
-    def rating(self, obj):
-        rating = Rating.objects.filter(recipe__id=obj.id).\
-            aggregate(average_rating=Avg('value'))
-        if rating['average_rating']:
-            return rating['average_rating']
-        else:
-            return 'Recipe has not been rated by anyone yet'
 
-    def reviews(self, obj):
-        return Review.objects.\
-            filter(recipe__id=obj.id).count()
+@admin.register(Ingredient)
+class IngredientAdmin(admin.ModelAdmin):
+    list_display = ['recipe', 'name', 'slug',
+                    'quantity', 'units_of_measurement',]
 
-    def ingredients(self, obj):
-        ingredients = Ingredient.objects.filter(recipe__id=obj.id).all()
-        ingredients_list = []
-        for ing in ingredients:
-            if ing.units_of_measurement:
-                ingredients_list.append(
-                    f'{ing.quantity} {ing.units_of_measurement} of {ing.name.lower()}')
-            else:
-                ingredients_list.append(f'{ing.quantity} {ing.name.lower()}')
-        return ingredients_list
+    list_filter = ['recipe', 'name', 'slug',
+                   'quantity', 'units_of_measurement']
+
+    search_fields = ['name']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).\
+            select_related('recipe')
 
 
 @admin.register(Review)
@@ -71,6 +64,23 @@ class ReviewAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         'recipe', 'author', 'published'
+    ]
+    search_fields = [
+        'content'
+    ]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).\
+            select_related('author', 'recipe')
+
+
+@admin.register(Rating)
+class RatingAdmin(admin.ModelAdmin):
+    list_display = [
+        'recipe', 'author', 'value', 'published'
+    ]
+    list_filter = [
+        'recipe', 'author', 'published', 'value'
     ]
 
     def get_queryset(self, request):

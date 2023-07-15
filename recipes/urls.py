@@ -25,6 +25,7 @@ recipes_router.register(
     r'ratings', views.RatingViewSet, basename='recipe-rating'
 )
 
+
 urlpatterns = [
     path('', include(router.urls)),
     path('', include(recipes_router.urls))

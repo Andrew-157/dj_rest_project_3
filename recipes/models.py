@@ -95,6 +95,7 @@ class Ingredient(models.Model):
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
+        self.name = self.name.lower()
         super(Ingredient, self).save(*args, **kwargs)
 
 

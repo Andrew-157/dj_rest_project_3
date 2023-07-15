@@ -7,25 +7,53 @@ from users.models import CustomUser
 
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
-
     get_recipes = serializers.HyperlinkedIdentityField(
         view_name='category-get-recipes', read_only=True
     )
 
     class Meta:
         model = Category
-        fields = [
-            'url', 'id', 'title', 'slug', 'recipes_in_category', 'get_recipes'
-        ]
+        fields = ['url', 'title', 'slug', 'get_recipes']
 
-    recipes_in_category = serializers.SerializerMethodField(
-        method_name='count_recipes'
+
+class RecipeSerializer(serializers.HyperlinkedModelSerializer):
+    author = serializers.ReadOnlyField(source='author.username')
+    category_title = serializers.ReadOnlyField(source='category.title')
+    category = serializers.HyperlinkedRelatedField(view_name='category-detail',
+                                                   read_only=True)
+    get_ingredients = serializers.HyperlinkedIdentityField(
+        view_name='recipe-get-ingredients', read_only=True
     )
 
-    def count_recipes(self, category: Category):
-        return Recipe.objects.filter(category__id=category.id).count()
-########################################################################
-########################################################################
+    get_reviews = serializers.HyperlinkedIdentityField(
+        view_name='recipe-get-reviews', read_only=True
+    )
+
+    get_average_rating = serializers.HyperlinkedIdentityField(
+        view_name='recipe-get-average-rating', read_only=True
+    )
+
+    get_images = serializers.HyperlinkedIdentityField(
+        view_name='recipe-get-images', read_only=True
+    )
+
+    class Meta:
+        model = Recipe
+        fields = ['url', 'id', 'title', 'slug',
+                  'instructions', 'published', 'author',
+                  'category_title', 'category',
+                  'get_ingredients', 'get_reviews',
+                  'get_average_rating',
+                  'get_images']
+
+
+class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
+    category_title = serializers.ReadOnlyField(source='category.title')
+
+    class Meta:
+        model = Recipe
+        fields = ['url', 'id', 'title', 'instructions', 'published',
+                  'category_title', 'category']
 
 
 class IngredientSerializer(NestedHyperlinkedModelSerializer):
@@ -36,21 +64,27 @@ class IngredientSerializer(NestedHyperlinkedModelSerializer):
             'recipe_pk': 'recipe__pk'
         }
     )
-
     recipe_title = serializers.ReadOnlyField(source='recipe.title')
     recipe = serializers.HyperlinkedRelatedField(
-        view_name='recipe-detail', read_only=True
-    )
+        view_name='recipe-detail', read_only=True)
 
     class Meta:
         model = Ingredient
         fields = [
             'url', 'id', 'name', 'slug', 'quantity',
             'units_of_measurement', 'recipe_title',
-            'recipe'
+            'recipe', 'ingredient_with_quantity'
         ]
-########################################################################
-########################################################################
+
+    ingredient_with_quantity = serializers.SerializerMethodField(
+        method_name='ingredient_repr'
+    )
+
+    def ingredient_repr(self, ingredient: Ingredient):
+        if ingredient.units_of_measurement:
+            return f'{ingredient.quantity} {ingredient.units_of_measurement} of {ingredient.name}'
+        else:
+            return f'{ingredient.quantity} {ingredient.name}'
 
 
 class CreateUpdateIngredientSerializer(NestedHyperlinkedModelSerializer):
@@ -64,18 +98,14 @@ class CreateUpdateIngredientSerializer(NestedHyperlinkedModelSerializer):
 
     recipe_title = serializers.ReadOnlyField(source='recipe.title')
     recipe = serializers.HyperlinkedRelatedField(
-        view_name='recipe-detail', read_only=True
-    )
+        view_name='recipe-detail', read_only=True)
 
     class Meta:
         model = Ingredient
         fields = [
             'url', 'id', 'name', 'quantity',
-            'units_of_measurement', 'recipe_title',
-            'recipe'
+            'units_of_measurement', 'recipe_title', 'recipe'
         ]
-########################################################################
-########################################################################
 
 
 class RecipeImageSerializer(NestedHyperlinkedModelSerializer):
@@ -97,8 +127,6 @@ class RecipeImageSerializer(NestedHyperlinkedModelSerializer):
         fields = [
             'url', 'id', 'image', 'recipe_title', 'recipe'
         ]
-########################################################################
-########################################################################
 
 
 class ReviewSerializer(NestedHyperlinkedModelSerializer):
@@ -123,10 +151,8 @@ class ReviewSerializer(NestedHyperlinkedModelSerializer):
         model = Review
         fields = [
             'url', 'id', 'content', 'author_name', 'author',
-            'published', 'recipe_title', 'recipe'
+            'published', 'recipe_title', 'recipe',
         ]
-########################################################################
-########################################################################
 
 
 class RatingSerializer(NestedHyperlinkedModelSerializer):
@@ -150,103 +176,14 @@ class RatingSerializer(NestedHyperlinkedModelSerializer):
     class Meta:
         model = Rating
         fields = [
-            'url', 'id', 'value', 'author_name',
-            'author', 'published', 'recipe_title', 'recipe'
-        ]
-########################################################################
-########################################################################
-
-
-class RecipeSerializer(serializers.HyperlinkedModelSerializer):
-    author_name = serializers.ReadOnlyField(source='author.username')
-    author = serializers.HyperlinkedRelatedField(
-        view_name='author-detail', read_only=True
-    )
-    category = CategorySerializer()
-    ingredients = NestedHyperlinkedRelatedField(
-        many=True,
-        read_only=True,
-        view_name='recipe-ingredient-detail',
-        parent_lookup_kwargs={'recipe_pk': 'recipe__pk'}
-    )
-    images = NestedHyperlinkedRelatedField(
-        many=True,
-        read_only=True,
-        view_name='recipe-image-detail',
-        parent_lookup_kwargs={
-            'recipe_pk': 'recipe__pk'
-        }
-    )
-    get_reviews = serializers.HyperlinkedIdentityField(
-        view_name='recipe-get-reviews', read_only=True
-    )
-
-    class Meta:
-        model = Recipe
-        fields = [
-            'url', 'id', 'title', 'slug', 'author_name', 'author',
-            'category', 'instructions', 'published', 'list_ingredients',
-            'ingredients', 'images', 'reviews_number', 'get_reviews', 'rating'
+            'url', 'id', 'value', 'author_name', 'author',
+            'published', 'recipe_title', 'recipe'
         ]
 
-    list_ingredients = serializers.SerializerMethodField(
-        method_name='get_ingredients'
-    )
 
-    def get_ingredients(self, recipe: Recipe):
-        ingredients = Ingredient.objects.filter(recipe__id=recipe.id).all()
-        ingredients_list = []
-        for ing in ingredients:
-            if ing.units_of_measurement:
-                ingredients_list.append(
-                    f'{ing.quantity} {ing.units_of_measurement} of {ing.name.lower()}')
-            else:
-                ingredients_list.append(f'{ing.quantity} {ing.name.lower()}')
-        return ingredients_list
-
-    reviews_number = serializers.SerializerMethodField(
-        method_name='count_reviews'
-    )
-
-    def count_reviews(self, recipe: Recipe):
-        return Review.objects.filter(recipe__id=recipe.id).count()
-
-    rating = serializers.SerializerMethodField(
-        method_name='count_ratings'
-    )
-
-    def count_ratings(self, recipe: Recipe):
-        rating = Rating.objects.filter(recipe__id=recipe.id).aggregate(
-            average_rating=Avg('value')
-        )
-        if rating['average_rating']:
-            return rating['average_rating']
-        else:
-            return 'Recipe has not been rated by anyone yet'
-########################################################################
-########################################################################
-
-
-class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
-    author_name = serializers.ReadOnlyField(source='author.username')
-    author = serializers.HyperlinkedRelatedField(
-        view_name='author-detail', read_only=True
-    )
-
-    class Meta:
-        model = Recipe
-        fields = [
-            'url', 'id', 'title', 'author_name', 'author',
-            'category', 'instructions', 'published'
-        ]
-########################################################################
-########################################################################
-
-
-class AuthorSerializer(serializers.HyperlinkedModelSerializer):
+class AuthorSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name='author-detail', read_only=True
-    )
+        view_name='author-detail', read_only=True)
 
     get_recipes = serializers.HyperlinkedIdentityField(
         view_name='author-get-recipes', read_only=True
@@ -255,12 +192,5 @@ class AuthorSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'url', 'id', 'username', 'image', 'number_of_recipes', 'get_recipes'
+            'url', 'id', 'username', 'image', 'get_recipes'
         ]
-
-    number_of_recipes = serializers.SerializerMethodField(
-        method_name='count_recipes'
-    )
-
-    def count_recipes(self, customuser: CustomUser):
-        return Recipe.objects.filter(author__id=customuser.id).count()
