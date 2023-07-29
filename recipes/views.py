@@ -13,6 +13,7 @@ from recipes.serializers import CategorySerializer, RecipeSerializer, CreateUpda
     IngredientSerializer, CreateUpdateIngredientSerializer, RecipeImageSerializer, ReviewSerializer,\
     RatingSerializer, AuthorSerializer
 from recipes.permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly, IsParentObjectAuthorOrReadOnly
+from recipes.exceptions import ConflictException
 from users.models import CustomUser
 
 
@@ -26,9 +27,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         if Recipe.objects.filter(category_id=self.kwargs['pk']):
-            raise MethodNotAllowed(method='DELETE',
-                                   detail='Category cannot be deleted as there are recipes that are\
-                                    associated with it.')
+            raise ConflictException(method='DELETE',
+                                    detail='Category has recipes associated with it, cannot be deleted.')
         return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=['GET', 'HEAD', 'OPTIONS'])
