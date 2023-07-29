@@ -86,6 +86,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             return Response(serializer.data)
 
+    @action(detail=True, methods=['GET', 'HEAD', 'OPTIONS'])
+    def get_ratings(self, request, *args, **kwargs):
+        recipe = self.get_object()
+        ratings = Rating.objects.\
+            filter(recipe=recipe).select_related('author', 'recipe').all()
+        if request.method == 'GET':
+            serializer = RatingSerializer(
+                ratings, many=True,
+                context={'request': request}
+            )
+            return Response(serializer.data)
+
     @action(detail=True,  methods=['GET', 'HEAD', 'OPTIONS'])
     def get_average_rating(self, request, *args, **kwargs):
         recipe = self.get_object()

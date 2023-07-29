@@ -29,6 +29,10 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         view_name='recipe-get-reviews', read_only=True
     )
 
+    get_ratings = serializers.HyperlinkedIdentityField(
+        view_name='recipe-get-ratings', read_only=True
+    )
+
     get_average_rating = serializers.HyperlinkedIdentityField(
         view_name='recipe-get-average-rating', read_only=True
     )
@@ -43,7 +47,7 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
                   'instructions', 'published', 'author',
                   'category_title', 'category',
                   'get_ingredients', 'get_reviews',
-                  'get_average_rating',
+                  'get_ratings', 'get_average_rating',
                   'get_images']
 
 
