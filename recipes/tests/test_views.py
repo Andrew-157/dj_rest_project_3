@@ -60,6 +60,11 @@ class CategoriesTests(APITestCase):
                          'get_recipes': test_server_prefix + reverse('category-get-recipes', kwargs={'pk': category.id})}
         self.assertEqual(response.data, expected_data)
 
+    def test_get_nonexistent_category(self):
+        url = reverse('category-detail', kwargs={'pk': 56})
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_get_recipes_of_category_detail(self):
         category = Category.objects.filter(title='Soups').first()
         user = CustomUser.objects.filter(username='test_user').first()
@@ -258,13 +263,6 @@ class RecipesTests(APITestCase):
             instructions='Cook pasta 1'
         )
 
-        Recipe.objects.create(
-            author=test_user_2,
-            category=category_1,
-            title='Pasta 2',
-            instructions='Cook pasta 2'
-        )
-
     # GET list
     def test_get_recipe_list(self):
         url = reverse('recipe-list')
@@ -440,15 +438,15 @@ class RecipesTests(APITestCase):
     # PUT
     def test_logged_user_updates_recipe_with_not_unique_title(self):
         user_1 = CustomUser.objects.filter(username='user1').first()
-        user_2 = CustomUser.objects.filter(username='user2').first()
-        user_1_recipe = Recipe.objects.filter(author=user_1).first()
-        user_2_recipe = Recipe.objects.filter(author=user_2).first()
+        recipe = Recipe.objects.filter(author=user_1).first()
+        Recipe.objects.create(author=user_1, title='Pasta 2',
+                              instructions='Cook pasta 2', category=recipe.category)
         token = AccessToken.for_user(user_1)
         self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
-        url = reverse('recipe-detail', kwargs={'pk': user_1_recipe.id})
-        response = self.client.put(url, data={'title': user_2_recipe.title,
-                                              'instructions': user_1_recipe.instructions,
-                                              'category': user_1_recipe.category.title},
+        url = reverse('recipe-detail', kwargs={'pk': recipe.id})
+        response = self.client.put(url, data={'title': 'Pasta 2',
+                                              'instructions': recipe.instructions,
+                                              'category': recipe.category.title},
                                    format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -467,13 +465,13 @@ class RecipesTests(APITestCase):
     def test_logged_user_without_permission_updates_recipe(self):
         user_1 = CustomUser.objects.filter(username='user1').first()
         user_2 = CustomUser.objects.filter(username='user2').first()
-        user_2_recipe = Recipe.objects.filter(author=user_2).first()
-        token = AccessToken.for_user(user_1)
+        user_1_recipe = Recipe.objects.filter(author=user_1).first()
+        token = AccessToken.for_user(user_2)
         self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
-        url = reverse('recipe-detail', kwargs={'pk': user_2_recipe.id})
-        response = self.client.put(url, data={'title': user_2_recipe.title,
-                                              'instructions': user_2_recipe.instructions,
-                                              'category': user_2_recipe.category.title},
+        url = reverse('recipe-detail', kwargs={'pk': user_1_recipe.id})
+        response = self.client.put(url, data={'title': user_1_recipe.title,
+                                              'instructions': user_1_recipe.instructions,
+                                              'category': user_1_recipe.category.title},
                                    format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -534,10 +532,10 @@ class RecipesTests(APITestCase):
     def test_logged_user_without_permission_deletes_recipe(self):
         user_1 = CustomUser.objects.filter(username='user1').first()
         user_2 = CustomUser.objects.filter(username='user2').first()
-        user_2_recipe = Recipe.objects.filter(author=user_2).first()
-        token = AccessToken.for_user(user_1)
+        user_1_recipe = Recipe.objects.filter(author=user_1).first()
+        token = AccessToken.for_user(user_2)
         self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
-        url = reverse('recipe-detail', kwargs={'pk': user_2_recipe.id})
+        url = reverse('recipe-detail', kwargs={'pk': user_1_recipe.id})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -552,5 +550,332 @@ class RecipesTests(APITestCase):
 
     def test_not_authorized_user_deletes_recipe(self):
         url = reverse('recipe-detail', kwargs={'pk': 45})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class IngredientsTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        test_user_1 = CustomUser.objects.create_user(username='user1',
+                                                     email='user1@gmail.com',
+                                                     password='34somepassword34')
+        test_user_2 = CustomUser.objects.create_user(username='user2',
+                                                     email='user2@gmail.com',
+                                                     password='34somepassword34')
+
+        category = Category.objects.create(title='Pasta',
+                                           slug='pasta')
+        recipe = Recipe.objects.create(author=test_user_1,
+                                       category=category,
+                                       title='Pasta 1',
+                                       instructions='Cook pasta')
+        ingredient_1 = Ingredient.objects.create(recipe=recipe,
+                                                 name='eggs',
+                                                 quantity=3)
+        ingredient_2 = Ingredient.objects.create(recipe=recipe,
+                                                 name='cheese',
+                                                 quantity=500,
+                                                 units_of_measurement='gm')
+
+    # GET list
+    def test_get_ingredient_list(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        url = reverse('recipe-ingredient-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_ingredient_list_for_nonexistent_recipe(self):
+        url = reverse('recipe-ingredient-list',
+                      kwargs={'recipe_pk': 78})
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # GET detail
+    def test_get_ingredient_detail(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        ingredient = Ingredient.objects.filter(recipe=recipe).first()
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': ingredient.id})
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ingredient_with_quantity = None
+        if ingredient.units_of_measurement:
+            ingredient_with_quantity = f'{ingredient.quantity} {ingredient.units_of_measurement} of {ingredient.name}'
+        else:
+            ingredient_with_quantity = f'{ingredient.quantity} {ingredient.name}'
+        test_server_prefix = 'http://testserver'
+        expected_data = {
+            'url': test_server_prefix + reverse('recipe-ingredient-detail',
+                                                kwargs={'recipe_pk': recipe.id, 'pk': ingredient.id}),
+            'id': ingredient.id,
+            'name': ingredient.name,
+            'slug': ingredient.slug,
+            'quantity': str(ingredient.quantity),
+            'units_of_measurement': ingredient.units_of_measurement,
+            'recipe_title': recipe.title,
+            'recipe': test_server_prefix + reverse('recipe-detail', kwargs={'pk': recipe.id}),
+            'ingredient_with_quantity': ingredient_with_quantity
+        }
+        self.assertEqual(response.data, expected_data)
+
+    def test_get_nonexistent_ingredient_detail(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': 76})
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # POST
+    def test_logged_user_posts_ingredient_with_not_unique_name(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        ingredient = Ingredient.objects.filter(recipe=recipe).first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={'name': ingredient.name,
+                                               'quantity': 10}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_posts_ingredient_with_quantity_lower_than_zero(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={'name': 'butter',
+                                               'quantity': -1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_posts_new_ingredient(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={'name': 'butter',
+                                               'quantity': 100,
+                                               'units_of_measurement': 'gm'
+                                               }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        test_server_prefix = 'http://testserver'
+        ingredient = Ingredient.objects.filter(Q(recipe=recipe) &
+                                               Q(name='butter')).first()
+        expected_data = {'url': test_server_prefix + reverse('recipe-ingredient-detail',
+                                                             kwargs={'recipe_pk': recipe.id,
+                                                                     'pk': ingredient.id}),
+                         'id': ingredient.id,
+                         'name': ingredient.name,
+                         'quantity': str(ingredient.quantity),
+                         'units_of_measurement': ingredient.units_of_measurement,
+                         'recipe_title': ingredient.recipe.title,
+                         'recipe': test_server_prefix + reverse('recipe-detail', kwargs={'pk': recipe.id})
+                         }
+        self.assertEqual(response.data, expected_data)
+
+    def test_post_ingredient_for_nonexistent_recipe(self):
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-list', kwargs={'recipe_pk': 67})
+        response = self.client.post(url, data={'name': 'basil',
+                                               'quantity': 20,
+                                               'units_of_measurement': 'gm'})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_logged_user_without_permission_posts_ingredient(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user2').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={'name': 'new name',
+                                               'quantity': 2}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_not_authorized_user_posts_ingredient(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        url = reverse('recipe-ingredient-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={'name': 'new name',
+                                               'quantity': 2}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    # PUT
+    def test_logged_user_updates_ingredient_with_not_unique_name(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        ingredient_1 = Ingredient.objects.filter(
+            Q(recipe=recipe) & Q(name='eggs')
+        ).first()
+        ingredient_2 = Ingredient.objects.filter(
+            Q(recipe=recipe) & Q(name='cheese')
+        ).first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-detail', kwargs={'recipe_pk': recipe.id,
+                                                          'pk': ingredient_1.id})
+        response = self.client.put(url, data={'name': ingredient_2.name,
+                                              'quantity': 35,
+                                              'unit_of_measurement': 'gm'},
+                                   format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_updates_ingredient_with_quantity_less_than_zero(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        ingredient = Ingredient.objects.filter(Q(recipe=recipe)
+                                               & Q(name='eggs')).first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-detail', kwargs={'recipe_pk': recipe.id,
+                                                          'pk': ingredient.id})
+        response = self.client.put(url, data={'name': ingredient.name,
+                                              'quantity': -1},
+                                   format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_updates_ingredient(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        ingredient = Ingredient.objects.filter(
+            Q(recipe=recipe) & Q(name='cheese')).first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-detail', kwargs={'recipe_pk': recipe.id,
+                                                          'pk': ingredient.id})
+        response = self.client.put(url, data={'name': 'cheddar',
+                                              'quantity': ingredient.quantity,
+                                              'units_of_measurement': ingredient.units_of_measurement})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        test_server_prefix = 'http://testserver'
+        ingredient = Ingredient.objects.filter(Q(recipe=recipe) &
+                                               Q(name='cheddar')).first()
+        expected_data = {
+            'url': test_server_prefix + reverse('recipe-ingredient-detail',
+                                                kwargs={'recipe_pk': recipe.id,
+                                                        'pk': ingredient.id}),
+            'id': ingredient.id,
+            'name': ingredient.name,
+            'quantity': str(ingredient.quantity),
+            'units_of_measurement': ingredient.units_of_measurement,
+            'recipe_title': ingredient.recipe.title,
+            'recipe': test_server_prefix + reverse('recipe-detail', kwargs={'pk': recipe.id})
+        }
+        self.assertEqual(response.data, expected_data)
+
+    def test_logged_user_updates_nonexistent_ingredient(self):
+        user = CustomUser.objects.filter(username='user1').first()
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': 99})
+        response = self.client.put(url, data={'name': 'cheddar',
+                                              'quantity': 50,
+                                              'units_of_measurement': 'gm'},
+                                   format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_ingredient_for_nonexistent_recipe(self):
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': 78,
+                              'pk': 67})
+        response = self.client.put(url, data={'name': 'cheddar',
+                                              'quantity': 50,
+                                              'units_of_measurement': 'gm'},
+                                   format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_logged_user_without_permission_updates_ingredient(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        ingredient = Ingredient.objects.filter(
+            Q(recipe=recipe) & Q(name='cheese')).first()
+        user = CustomUser.objects.filter(username='user2').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': ingredient.id})
+        response = self.client.put(url, data={'name': 'cheddar',
+                                              'quantity': ingredient.quantity,
+                                              'units_of_measurement': ingredient.units_of_measurement},
+                                   format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_not_authorized_user_updates_ingredient(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        ingredient = Ingredient.objects.filter(
+            Q(recipe=recipe) & Q(name='cheese')).first()
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': ingredient.id})
+        response = self.client.put(url, data={'name': 'cheddar',
+                                              'quantity': ingredient.quantity,
+                                              'units_of_measurement': ingredient.units_of_measurement},
+                                   format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    # DELETE
+    def test_logged_user_deletes(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        ingredient = Ingredient.objects.filter(
+            Q(recipe=recipe) & Q(name='cheese')).first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': ingredient.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_logged_user_deletes_nonexistent_ingredient(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': 90})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_ingredient_for_nonexistent_recipe(self):
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': 78,
+                              'pk': 67})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_logged_user_without_permission_deletes_ingredient(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        ingredient = Ingredient.objects.filter(
+            Q(recipe=recipe) & Q(name='cheese')).first()
+        user = CustomUser.objects.filter(username='user2').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': ingredient.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_not_authorized_user_deletes_ingredient(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        ingredient = Ingredient.objects.filter(
+            Q(recipe=recipe) & Q(name='cheese')).first()
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': ingredient.id})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

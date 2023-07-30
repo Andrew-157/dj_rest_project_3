@@ -5,14 +5,14 @@ from rest_framework import viewsets, mixins
 from rest_framework import filters
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, MethodNotAllowed
+from rest_framework.exceptions import NotFound, MethodNotAllowed, ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 from recipes.models import Category, Recipe, Ingredient, RecipeImage, Review, Rating
 from recipes.serializers import CategorySerializer, RecipeSerializer, CreateUpdateRecipeSerializer,\
     IngredientSerializer, CreateUpdateIngredientSerializer, RecipeImageSerializer, ReviewSerializer,\
     RatingSerializer, AuthorSerializer
-from recipes.permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly, IsParentObjectAuthorOrReadOnly
+from recipes.permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly, IsRecipeAuthorOrReadOnly
 from recipes.exceptions import ConflictException
 from users.models import CustomUser
 
@@ -121,9 +121,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
-    # queryset = Ingredient.objects.all()
-    permission_classes = [IsAuthenticatedOrReadOnly,
-                          IsParentObjectAuthorOrReadOnly]
+    permission_classes = [IsRecipeAuthorOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name, slug']
     ordering_fields = ['name', 'slug']
@@ -135,11 +133,9 @@ class IngredientViewSet(viewsets.ModelViewSet):
             return CreateUpdateIngredientSerializer
 
     def get_queryset(self):
-        recipe_pk = self.kwargs['recipe_pk']
-        recipe = Recipe.objects.filter(id=recipe_pk).first()
-        if not recipe:
-            raise NotFound(detail=f'Recipe with id {recipe_pk} was not found.')
-        return Ingredient.objects.select_related('recipe', 'recipe__author').filter(recipe=recipe).all()
+        return Ingredient.objects.\
+            select_related('recipe', 'recipe__author').\
+            filter(recipe__id=self.kwargs['recipe_pk']).all()
 
     def perform_create(self, serializer):
         ingredient_name = str(self.request.data['name']).lower()
@@ -148,21 +144,19 @@ class IngredientViewSet(viewsets.ModelViewSet):
             Q(recipe__id=self.kwargs['recipe_pk'])
         ).first()
         if ingredient:
-            raise MethodNotAllowed(method='POST',
-                                   detail=f"Ingredient with name '{ingredient_name}' already exists for this recipe.")
+            raise ValidationError(
+                detail=f"Ingredient with name '{ingredient_name}' already exists for this recipe.")
         serializer.save(recipe_id=self.kwargs['recipe_pk'])
 
     def perform_update(self, serializer):
         ingredient = self.get_object()
-        # ingredient = Ingredient.objects.filter(id=self.kwargs['pk']).first()
         ingredient_name = str(self.request.data['name']).lower()
         ingredient_with_name = Ingredient.objects.filter(
             Q(recipe__id=self.kwargs['recipe_pk']) &
             Q(name=ingredient_name)
         ).first()
         if ingredient_with_name and (ingredient_with_name != ingredient):
-            raise MethodNotAllowed(method='PUT',
-                                   detail=f"Ingredient with name '{ingredient_name}' already exists\
+            raise ValidationError(detail=f"Ingredient with name '{ingredient_name}' already exists\
                                     for this recipe.")
         return super().perform_update(serializer)
 
@@ -174,7 +168,7 @@ class RecipeImageViewSet(mixins.ListModelMixin,
                          viewsets.GenericViewSet):
     serializer_class = RecipeImageSerializer
     permission_classes = [
-        IsAuthenticatedOrReadOnly, IsParentObjectAuthorOrReadOnly
+        IsAuthenticatedOrReadOnly, IsRecipeAuthorOrReadOnly
     ]
 
     def get_queryset(self):

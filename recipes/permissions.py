@@ -1,4 +1,6 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.exceptions import NotFound
+from recipes.models import Recipe, Ingredient
 
 
 class IsAdminOrReadOnly(BasePermission):
@@ -16,13 +18,29 @@ class IsAuthorOrReadOnly(BasePermission):
         return obj.author == request.user
 
 
-class IsParentObjectAuthorOrReadOnly(BasePermission):
-    # This permission returns True for an object
-    # only if the user is the creator of the parent of the object
-    # For example: We have Recipe model that has author field as Foreign Key
-    # and RecipeImage model for which Recipe is a parent, but it does not have
-    # author field, so we check if the user is an author of parent Recipe
-    def has_object_permission(self, request, view, obj):
+class IsRecipeAuthorOrReadOnly(BasePermission):
+    # Permission to check that only user that created Recipe
+    # can create, update or delete objects that reference that recipe
+    def has_permission(self, request, view):
+        # If recipe that is referenced in url does not exist,
+        # then it does not matter if user is authenticated or not
+        recipe_id = view.kwargs['recipe_pk']
+        recipe = Recipe.objects.filter(id=recipe_id).first()
+        if not recipe:
+            raise NotFound(
+                detail=f"Recipe with id {view.kwargs['recipe_pk']} was not found")
+        if request.method in SAFE_METHODS:
+            return True
+        return recipe.author == request.user
+
+    def has_object_permission(self, request, view, obj: Ingredient):
+        # If recipe that is referenced in url does not exist,
+        # then it does not matter if user is authenticated or not
+        recipe_id = view.kwargs['recipe_pk']
+        recipe = Recipe.objects.filter(id=recipe_id).first()
+        if not recipe:
+            raise NotFound(
+                detail=f"Recipe with id {view.kwargs['recipe_pk']} was not found")
         if request.method in SAFE_METHODS:
             return True
         return obj.recipe.author == request.user
