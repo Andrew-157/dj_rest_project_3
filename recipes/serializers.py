@@ -17,7 +17,9 @@ class CategorySerializer(serializers.HyperlinkedModelSerializer):
 
 
 class RecipeSerializer(serializers.HyperlinkedModelSerializer):
-    author = serializers.ReadOnlyField(source='author.username')
+    author_name = serializers.ReadOnlyField(source='author.username')
+    author = serializers.HyperlinkedRelatedField(view_name='author-detail',
+                                                 read_only=True)
     category_title = serializers.ReadOnlyField(source='category.title')
     category = serializers.HyperlinkedRelatedField(view_name='category-detail',
                                                    read_only=True)
@@ -44,7 +46,8 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Recipe
         fields = ['url', 'id', 'title', 'slug',
-                  'instructions', 'published', 'author',
+                  'instructions', 'published', 'updated',
+                  'author_name', 'author',
                   'category_title', 'category',
                   'get_ingredients', 'get_reviews',
                   'get_ratings', 'get_average_rating',
@@ -56,7 +59,7 @@ class CreateUpdateRecipeSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ['url', 'id', 'title', 'instructions', 'published',
+        fields = ['url', 'id', 'title', 'instructions', 'published', 'updated',
                   'category_title', 'category']
 
 
@@ -155,7 +158,7 @@ class ReviewSerializer(NestedHyperlinkedModelSerializer):
         model = Review
         fields = [
             'url', 'id', 'content', 'author_name', 'author',
-            'published', 'recipe_title', 'recipe',
+            'published', 'updated', 'recipe_title', 'recipe',
         ]
 
 
@@ -181,7 +184,7 @@ class RatingSerializer(NestedHyperlinkedModelSerializer):
         model = Rating
         fields = [
             'url', 'id', 'value', 'author_name', 'author',
-            'published', 'recipe_title', 'recipe'
+            'published', 'updated', 'recipe_title', 'recipe'
         ]
 
 

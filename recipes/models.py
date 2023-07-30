@@ -27,10 +27,12 @@ class Rating(models.Model):
     author = models.ForeignKey(
         CustomUser, related_name='ratings', on_delete=models.CASCADE)
     value = models.PositiveSmallIntegerField(choices=rating_choices)
-    published = models.DateTimeField(auto_now=True)
+    published = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-published']
+        unique_together = ('recipe', 'author')
 
 
 class Recipe(models.Model):
@@ -41,7 +43,10 @@ class Recipe(models.Model):
     slug = models.SlugField(max_length=155, unique=True, blank=True)
     category = models.ForeignKey(Category,
                                  on_delete=models.PROTECT, related_name='recipes')
+    # null=True on published has no functionality
+    # it was necessary because of some issues while running migration
     published = models.DateTimeField(auto_now_add=True, null=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title)
@@ -52,14 +57,6 @@ class Recipe(models.Model):
 
     class Meta:
         ordering = ['title']
-
-    # @property
-    # def rating(self):
-    #     rating = Rating.objects.filter(recipe=self).aggregate(
-    #         average_rating=Avg('value')
-    #     )
-    #     if rating['average_rating']:
-    #         return rating['average_rating']
 
 
 class Ingredient(models.Model):
@@ -80,7 +77,7 @@ class Ingredient(models.Model):
     quantity = models.DecimalField(
         max_digits=6,
         decimal_places=2,
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(0)]
     )
     units_of_measurement = models.CharField(max_length=2,
                                             choices=UNITS_OF_MEASUREMENT, null=True)
@@ -116,22 +113,8 @@ class Review(models.Model):
         CustomUser, related_name='reviews', on_delete=models.CASCADE)
     content = models.TextField()
     published = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-published']
-
-
-# class Rating(models.Model):
-#     rating_choices = [(0, 0), (1, 1), (2, 2),
-#                       (3, 3), (4, 4), (5, 5),
-#                       (6, 6), (7, 7), (8, 8),
-#                       (9, 9), (10, 10)]
-#     recipe = models.ForeignKey(
-#         'recipes.Recipe', related_name='ratings', on_delete=models.CASCADE)
-#     author = models.ForeignKey(
-#         CustomUser, related_name='ratings', on_delete=models.CASCADE)
-#     value = models.PositiveSmallIntegerField(choices=rating_choices)
-#     published = models.DateTimeField(auto_now=True)
-
-#     class Meta:
-#         ordering = ['-published']
+        unique_together = ('recipe', 'author')
