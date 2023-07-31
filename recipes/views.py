@@ -224,15 +224,12 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class RatingViewSet(viewsets.ModelViewSet):
     serializer_class = RatingSerializer
-    permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        NestedIsAuthenticatedOrReadOnly, NestedIsAuthorOrReadOnly]
 
     def get_queryset(self):
         recipe_pk = self.kwargs['recipe_pk']
         recipe = Recipe.objects.filter(id=recipe_pk).first()
-        if not recipe:
-            raise NotFound(
-                detail=f"Recipe with id {recipe_pk} was not found."
-            )
         return Rating.objects.select_related('recipe', 'author').\
             filter(recipe=recipe).all()
 
@@ -244,7 +241,7 @@ class RatingViewSet(viewsets.ModelViewSet):
             Q(recipe__id=recipe_pk)
         ).first()
         if rating:
-            raise MethodNotAllowed(
+            raise ConflictException(
                 method='POST',
                 detail='User acn only have one rating for each recipe.'
             )
