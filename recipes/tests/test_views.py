@@ -1,6 +1,11 @@
+import os
 import tempfile
+from PIL import Image
+from io import BytesIO
 from django.db.models import Avg
+from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -43,7 +48,7 @@ class CategoriesTests(APITestCase):
     # GET list
     def test_get_category_list(self):
         url = reverse('category-list')
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # GET detail
@@ -51,7 +56,7 @@ class CategoriesTests(APITestCase):
         test_server_prefix = 'http://testserver'
         category = Category.objects.filter(title='Soups').first()
         url = reverse('category-detail', kwargs={'pk': category.id})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = {'url': test_server_prefix + reverse('category-detail', kwargs={'pk': category.id}),
                          'id': category.id,
@@ -62,7 +67,7 @@ class CategoriesTests(APITestCase):
 
     def test_get_nonexistent_category(self):
         url = reverse('category-detail', kwargs={'pk': 56})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_recipes_of_category_detail(self):
@@ -77,7 +82,7 @@ class CategoriesTests(APITestCase):
                                          title='Soup 2',
                                          instructions='Cook soup 2')
         url = reverse('category-get-recipes', kwargs={'pk': category.id})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         recipes_count_in_category = Recipe.objects.filter(
             category=category).count()
@@ -85,7 +90,7 @@ class CategoriesTests(APITestCase):
 
     def test_get_detail_of_nonexistent_category(self):
         url = reverse('category-detail', kwargs={'pk': 78})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     # POST
@@ -266,7 +271,7 @@ class RecipesTests(APITestCase):
     # GET list
     def test_get_recipe_list(self):
         url = reverse('recipe-list')
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # GET detail
@@ -274,7 +279,7 @@ class RecipesTests(APITestCase):
         test_server_prefix = 'http://testserver'
         recipe = Recipe.objects.filter(title='Pasta 1').first()
         url = reverse('recipe-detail', kwargs={'pk': recipe.id})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = {'url': test_server_prefix + reverse('recipe-detail', kwargs={'pk': recipe.id}),
                          'id': recipe.id,
@@ -310,7 +315,7 @@ class RecipesTests(APITestCase):
                                                  units_of_measurement='gm',
                                                  recipe=recipe)
         url = reverse('recipe-get-ingredients', kwargs={'pk': recipe.id})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         ingredients_count_for_recipe = Ingredient.objects.filter(
             recipe=recipe).count()
@@ -325,7 +330,7 @@ class RecipesTests(APITestCase):
         review_2 = Review.objects.create(recipe=recipe, author=user_2,
                                          content='Recipe review 2')
         url = reverse('recipe-get-reviews', kwargs={'pk': recipe.id})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         reviews_count_for_recipe = Review.objects.filter(
             recipe=recipe).count()
@@ -340,7 +345,7 @@ class RecipesTests(APITestCase):
         rating_2 = Rating.objects.create(recipe=recipe, author=user_2,
                                          value=8)
         url = reverse('recipe-get-ratings', kwargs={'pk': recipe.id})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         ratings_count_for_recipe = Rating.objects.filter(
             recipe=recipe).count()
@@ -355,7 +360,7 @@ class RecipesTests(APITestCase):
         rating_2 = Rating.objects.create(recipe=recipe, author=user_2,
                                          value=8)
         url = reverse('recipe-get-average-rating', kwargs={'pk': recipe.id})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         average_recipe_rating = Rating.objects.filter(
             recipe=recipe).aggregate(avg_rating=Avg('value'))
@@ -368,7 +373,7 @@ class RecipesTests(APITestCase):
         image_2 = RecipeImage.objects.create(recipe=recipe,
                                              image=tempfile.NamedTemporaryFile(suffix=".jpg").name)
         url = reverse('recipe-get-images', kwargs={'pk': recipe.id})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         images_count_for_recipe = RecipeImage.objects.filter(
             recipe=recipe).count()
@@ -583,13 +588,13 @@ class IngredientsTests(APITestCase):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
         url = reverse('recipe-ingredient-list',
                       kwargs={'recipe_pk': recipe.id})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_get_ingredient_list_for_nonexistent_recipe(self):
         url = reverse('recipe-ingredient-list',
                       kwargs={'recipe_pk': 78})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     # GET detail
@@ -599,7 +604,7 @@ class IngredientsTests(APITestCase):
         url = reverse('recipe-ingredient-detail',
                       kwargs={'recipe_pk': recipe.id,
                               'pk': ingredient.id})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         ingredient_with_quantity = None
         if ingredient.units_of_measurement:
@@ -626,7 +631,7 @@ class IngredientsTests(APITestCase):
         url = reverse('recipe-ingredient-detail',
                       kwargs={'recipe_pk': recipe.id,
                               'pk': 76})
-        response = self.client.get(url, format='json')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     # POST
@@ -826,7 +831,7 @@ class IngredientsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     # DELETE
-    def test_logged_user_deletes(self):
+    def test_logged_user_deletes_ingredient(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
         ingredient = Ingredient.objects.filter(
             Q(recipe=recipe) & Q(name='cheese')).first()
@@ -877,5 +882,227 @@ class IngredientsTests(APITestCase):
         url = reverse('recipe-ingredient-detail',
                       kwargs={'recipe_pk': recipe.id,
                               'pk': ingredient.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class RecipeImagesTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        test_user_1 = CustomUser.objects.create_user(
+            username='user1',
+            email='user1@gmail.com',
+            password='34somepassword34'
+        )
+        test_user_2 = CustomUser.objects.create_user(
+            username='user2',
+            email='user2@gmail.com',
+            password='34somepassword34'
+        )
+
+        category = Category.objects.create(title='Pasta',
+                                           slug='pasta')
+        recipe = Recipe.objects.create(author=test_user_1,
+                                       category=category,
+                                       title='Pasta 1',
+                                       instructions='Cook pasta')
+
+        RecipeImage.objects.create(recipe=recipe,
+                                   image=tempfile.NamedTemporaryFile(suffix=".jpg").name)
+
+        RecipeImage.objects.create(recipe=recipe,
+                                   image=tempfile.NamedTemporaryFile(suffix=".jpg").name)
+
+    def tearDown(self) -> None:
+        try:
+            os.remove('media/recipes/images/test_image.jpg')
+        except FileNotFoundError:
+            pass
+        return super().tearDown()
+
+    # GET list
+    def test_get_image_list(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        url = reverse('recipe-image-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_image_list_for_nonexistent_recipe(self):
+        url = reverse('recipe-image-list',
+                      kwargs={'recipe_pk': 67})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # GET detail
+    def test_get_image_detail(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        image = RecipeImage.objects.filter(recipe=recipe).first()
+        url = reverse('recipe-image-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': image.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        test_server_prefix = 'http://testserver'
+        # get image path how it would look like in response
+        image_path_on_test_server = str(image.image).replace('\\', '/')
+        image_path_on_test_server = image_path_on_test_server.replace(
+            'C:', 'C%3A')
+        image_path_on_test_server = test_server_prefix + \
+            '/media/' + image_path_on_test_server
+        expected_data = {
+            'url': test_server_prefix + reverse('recipe-image-detail',
+                                                kwargs={'recipe_pk': recipe.id,
+                                                        'pk': image.id}),
+            'id': image.id,
+            'image': image_path_on_test_server,
+            'recipe_title': recipe.title,
+            'recipe': test_server_prefix + reverse('recipe-detail',
+                                                   kwargs={'pk': recipe.id})
+        }
+        self.assertEqual(response.data, expected_data)
+
+    def test_get_nonexistent_ingredient_detail(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        url = reverse('recipe-image-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': 78})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # POST
+    def test_logged_user_posts_new_image(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        url = reverse('recipe-image-list',
+                      kwargs={'recipe_pk': recipe.id})
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+
+        image = Image.new('RGB', (100, 100), color='red')
+        image_file = BytesIO()
+        image.save(image_file, 'jpeg')
+        image_file.seek(0)
+
+        uploaded_file = SimpleUploadedFile(
+            'test_image.jpg', image_file.read(), content_type='image/jpeg')
+
+        response = self.client.post(
+            url, data={'image': uploaded_file}, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        image = recipe.images.all().order_by('-id')[0]
+        test_server_prefix = 'http://testserver'
+        expected_data = {
+            'url': test_server_prefix + reverse('recipe-image-detail', kwargs={'recipe_pk': recipe.id,
+                                                                               'pk': image.id}),
+            'id': image.id,
+            'image': test_server_prefix + '/media/' + str(image.image),
+            'recipe_title': recipe.title,
+            'recipe': test_server_prefix + reverse('recipe-detail',
+                                                   kwargs={'pk': recipe.id})
+        }
+        self.assertEqual(response.data, expected_data)
+
+    def test_logged_user_posts_fourth_image(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        image = RecipeImage.objects.create(recipe=recipe,
+                                           image=tempfile.NamedTemporaryFile(suffix=".jpg").name)
+        url = reverse('recipe-image-list',
+                      kwargs={'recipe_pk': recipe.id})
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+
+        image = Image.new('RGB', (100, 100), color='red')
+        image_file = BytesIO()
+        image.save(image_file, 'jpeg')
+        image_file.seek(0)
+
+        uploaded_file = SimpleUploadedFile(
+            'test_image.jpg', image_file.read(), content_type='image/jpeg')
+
+        response = self.client.post(
+            url, data={'image': uploaded_file}, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_image_for_nonexistent_recipe(self):
+        url = reverse('recipe-image-list',
+                      kwargs={'recipe_pk': 78})
+        # ViewSet will raise a 404 error so it does not really
+        # matter if real image is sent and if right format is used
+        response = self.client.post(url, data={})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_logged_user_without_permission_posts_image(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user2').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        # ViewSet will raise a 403 error so it does not really
+        # matter if real image is sent and if right format is used
+        url = reverse('recipe-image-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_not_authorized_user_posts_image_for_recipe(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        url = reverse('recipe-image-list',
+                      kwargs={'recipe_pk': recipe.id})
+        # ViewSet will raise a 401 error so it does not really
+        # matter if real image is sent and if right format is used
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    # DELETE
+    def test_logged_user_deletes_image(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        image = RecipeImage.objects.filter(recipe=recipe).first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-image-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': image.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_logged_user_deletes_nonexistent_image(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-image-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': 56})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_image_for_nonexistent_recipe(self):
+        url = reverse('recipe-image-detail',
+                      kwargs={'recipe_pk': 89,
+                              'pk': 67})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_logged_user_without_permission_deletes_image(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        image = RecipeImage.objects.filter(recipe=recipe).first()
+        user = CustomUser.objects.filter(username='user2').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-image-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': image.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_not_authorized_user_deletes_image(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        image = RecipeImage.objects.filter(recipe=recipe).first()
+        url = reverse('recipe-image-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': image.id})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

@@ -4,6 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, mixins
 from rest_framework import filters
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, MethodNotAllowed, ValidationError
 from rest_framework.response import Response
@@ -167,16 +168,12 @@ class RecipeImageViewSet(mixins.ListModelMixin,
                          mixins.DestroyModelMixin,
                          viewsets.GenericViewSet):
     serializer_class = RecipeImageSerializer
-    permission_classes = [
-        IsAuthenticatedOrReadOnly, IsRecipeAuthorOrReadOnly
-    ]
+    permission_classes = [IsRecipeAuthorOrReadOnly]
 
     def get_queryset(self):
-        recipe_pk = self.kwargs['recipe_pk']
-        recipe = Recipe.objects.filter(id=recipe_pk).first()
-        if not recipe:
-            raise NotFound(detail=f"Recipe with id {recipe_pk} was not found.")
-        return RecipeImage.objects.select_related('recipe', 'recipe__author').filter(recipe=recipe).all()
+        return RecipeImage.objects.\
+            select_related('recipe', 'recipe__author').\
+            filter(recipe__id=self.kwargs['recipe_pk']).all()
 
     def perform_create(self, serializer):
         recipe_pk = self.kwargs['recipe_pk']
@@ -185,8 +182,7 @@ class RecipeImageViewSet(mixins.ListModelMixin,
         ).count()
         max_number_of_images = 3
         if number_of_images == max_number_of_images:
-            raise MethodNotAllowed(
-                method='POST',
+            raise ValidationError(
                 detail=f"More than {max_number_of_images} images cannot be posted for one recipe."
             )
         else:
