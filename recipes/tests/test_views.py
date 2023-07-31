@@ -1691,3 +1691,63 @@ class RatingsTests(APITestCase):
                               'pk': rating.id})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class AuthorsTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        test_user = CustomUser.objects.create_user(username='user',
+                                                   email='user@gmail.com',
+                                                   password='34somepassword34')
+
+    # GET list
+    def test_get_author_list(self):
+        url = reverse('author-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # GET detail
+    def test_get_author_detail(self):
+        author = CustomUser.objects.filter(username='user').first()
+        url = reverse('author-detail',
+                      kwargs={'pk': author.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        test_server_prefix = 'http://testserver'
+        expected_data = {
+            'url': test_server_prefix + reverse('author-detail',
+                                                kwargs={'pk': author.id}),
+            'id': author.id,
+            'username': author.username,
+            'image': None,
+            'get_recipes': test_server_prefix + reverse('author-get-recipes',
+                                                        kwargs={'pk': author.id})
+        }
+        self.assertEqual(response.data, expected_data)
+
+    def test_get_recipes_of_author_detail(self):
+        category = Category.objects.create(title='Pasta',
+                                           slug='pasta')
+        author = CustomUser.objects.filter(username='user').first()
+        recipe_1 = Recipe.objects.create(author=author,
+                                         category=category,
+                                         title='Pasta 1',
+                                         instructions='Cook pasta 1')
+        recipe_2 = Recipe.objects.create(author=author,
+                                         category=category,
+                                         title='Pasta 2',
+                                         instructions='Cook pasta 2')
+        url = reverse('author-get-recipes',
+                      kwargs={'pk': author.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        number_of_recipes_by_author = Recipe.objects.filter(
+            author=author).count()
+        self.assertEqual(len(response.data),
+                         number_of_recipes_by_author)
+
+    def test_nonexistent_author_detail(self):
+        url = reverse('author-get-recipes',
+                      kwargs={'pk': 99})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
