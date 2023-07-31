@@ -13,7 +13,8 @@ from recipes.models import Category, Recipe, Ingredient, RecipeImage, Review, Ra
 from recipes.serializers import CategorySerializer, RecipeSerializer, CreateUpdateRecipeSerializer,\
     IngredientSerializer, CreateUpdateIngredientSerializer, RecipeImageSerializer, ReviewSerializer,\
     RatingSerializer, AuthorSerializer
-from recipes.permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly, IsRecipeAuthorOrReadOnly
+from recipes.permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly, IsRecipeAuthorOrReadOnly, \
+    NestedIsAuthenticatedOrReadOnly, NestedIsAuthorOrReadOnly
 from recipes.exceptions import ConflictException
 from users.models import CustomUser
 
@@ -191,7 +192,8 @@ class RecipeImageViewSet(mixins.ListModelMixin,
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        NestedIsAuthenticatedOrReadOnly, NestedIsAuthorOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['author__username', 'content']
     ordering_fields = ['author__username', 'content', 'published']
@@ -199,10 +201,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         recipe_pk = self.kwargs['recipe_pk']
         recipe = Recipe.objects.filter(id=recipe_pk).first()
-        if not recipe:
-            raise NotFound(
-                detail=f"Recipe with id {recipe_pk} was not found."
-            )
         return Review.objects.select_related('recipe', 'author').\
             filter(recipe=recipe).all()
 
@@ -214,7 +212,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
             Q(recipe__id=recipe_pk)
         ).first()
         if review:
-            raise MethodNotAllowed(
+            raise ConflictException(
                 method='POST',
                 detail='User can only have one review for each recipe.'
             )
