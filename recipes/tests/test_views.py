@@ -105,6 +105,22 @@ class CategoriesTests(APITestCase):
                                     format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_admin_posts_category_with_empty_body(self):
+        admin = CustomUser.objects.filter(username='admin').first()
+        token = AccessToken.for_user(admin)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('category-list')
+        response = self.client.post(url, data={}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_admin_posts_category_with_no_body(self):
+        admin = CustomUser.objects.filter(username='admin').first()
+        token = AccessToken.for_user(admin)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('category-list')
+        response = self.client.post(url, data=None, format='json')
+        self.assertEqual(response.status_code, 400)
+
     def test_admin_posts_new_category(self):
         admin = CustomUser.objects.filter(username='admin').first()
         token = AccessToken.for_user(admin)
@@ -116,6 +132,7 @@ class CategoriesTests(APITestCase):
         test_server_prefix = 'http://testserver'
         new_category = Category.objects.filter(
             title='Pasta and Rissoto').first()
+        self.assertTrue(new_category is not None)
         expected_data = {'url': test_server_prefix + reverse('category-detail', kwargs={'pk': new_category.id}),
                          'id': new_category.id,
                          'title': new_category.title,
@@ -150,6 +167,24 @@ class CategoriesTests(APITestCase):
                                               'slug': existing_category.slug}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_admin_updates_category_with_empty_body(self):
+        category_to_update = Category.objects.filter(title='Soups').first()
+        admin = CustomUser.objects.filter(username='admin').first()
+        token = AccessToken.for_user(admin)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('category-detail', kwargs={'pk': category_to_update.id})
+        response = self.client.put(url, data={}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_admin_updates_category_with_no_body(self):
+        category_to_update = Category.objects.filter(title='Soups').first()
+        admin = CustomUser.objects.filter(username='admin').first()
+        token = AccessToken.for_user(admin)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('category-detail', kwargs={'pk': category_to_update.id})
+        response = self.client.put(url, data=None, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_admin_updates_category(self):
         category_to_update = Category.objects.filter(title='Soups').first()
         admin = CustomUser.objects.filter(username='admin').first()
@@ -158,9 +193,10 @@ class CategoriesTests(APITestCase):
         url = reverse('category-detail', kwargs={'pk': category_to_update.id})
         response = self.client.put(url, data={'title': 'Soups and Stews',
                                               'slug': 'soups-and-stews'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_category = Category.objects.filter(
             title='Soups and Stews').first()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(updated_category is not None)
         test_server_prefix = 'http://testserver'
         expected_data = {'url': test_server_prefix + reverse('category-detail', kwargs={'pk': updated_category.id}),
                          'id': updated_category.id,
@@ -385,18 +421,6 @@ class RecipesTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     # POST
-    def test_logged_user_posts_recipe_with_not_unique_title(self):
-        existing_recipe = Recipe.objects.filter(title='Pasta 1').first()
-        user = CustomUser.objects.filter(username='user1').first()
-        token = AccessToken.for_user(user)
-        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
-        url = reverse('recipe-list')
-        response = self.client.post(url, data={'title': existing_recipe.title,
-                                               'instructions': existing_recipe.instructions,
-                                               'category': existing_recipe.category.title},
-                                    format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
     def test_logged_user_posts_recipe_with_not_valid_category(self):
         user = CustomUser.objects.filter(username='user1').first()
         token = AccessToken.for_user(user)
@@ -408,7 +432,23 @@ class RecipesTests(APITestCase):
                                     format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_logged_user_posts_recipe_with_unique_title(self):
+    def test_logged_user_posts_recipe_with_empty_body(self):
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-list')
+        response = self.client.post(url, data={}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_posts_recipe_with_no_body(self):
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-list')
+        response = self.client.post(url, data=None, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_posts_recipe(self):
         category = Category.objects.filter(title='Pasta').first()
         category_url = reverse('category-detail', kwargs={'pk': category.id})
         user = CustomUser.objects.filter(username='user1').first()
@@ -441,20 +481,6 @@ class RecipesTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     # PUT
-    def test_logged_user_updates_recipe_with_not_unique_title(self):
-        user_1 = CustomUser.objects.filter(username='user1').first()
-        recipe = Recipe.objects.filter(author=user_1).first()
-        Recipe.objects.create(author=user_1, title='Pasta 2',
-                              instructions='Cook pasta 2', category=recipe.category)
-        token = AccessToken.for_user(user_1)
-        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
-        url = reverse('recipe-detail', kwargs={'pk': recipe.id})
-        response = self.client.put(url, data={'title': 'Pasta 2',
-                                              'instructions': recipe.instructions,
-                                              'category': recipe.category.title},
-                                   format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
     def test_logged_user_updates_recipe_with_not_valid_category(self):
         user = CustomUser.objects.filter(username='user1').first()
         recipe = Recipe.objects.filter(author=user).first()
@@ -465,6 +491,24 @@ class RecipesTests(APITestCase):
                                               'instructions': recipe.instructions,
                                               'category': 'Some category'},
                                    format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_updates_recipe_with_empty_body(self):
+        user = CustomUser.objects.filter(username='user1').first()
+        recipe = Recipe.objects.filter(author=user).first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-detail', kwargs={'pk': recipe.id})
+        response = self.client.put(url, data={}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_updates_recipe_with_no_body(self):
+        user = CustomUser.objects.filter(username='user1').first()
+        recipe = Recipe.objects.filter(author=user).first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-detail', kwargs={'pk': recipe.id})
+        response = self.client.put(url, data=None, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_logged_user_without_permission_updates_recipe(self):
@@ -592,10 +636,13 @@ class IngredientsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_get_ingredient_list_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 78
         url = reverse('recipe-ingredient-list',
-                      kwargs={'recipe_pk': 78})
+                      kwargs={'recipe_pk': nonexistent_recipe_id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f"Recipe with id {nonexistent_recipe_id} was not found."
+        self.assertEqual(response.data['detail'], error_detail)
 
     # GET detail
     def test_get_ingredient_detail(self):
@@ -634,8 +681,18 @@ class IngredientsTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_get_ingredient_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 98
+        url = reverse('recipe-ingredient-detail',
+                      kwargs={'recipe_pk': nonexistent_recipe_id,
+                              'pk': 86})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f'Recipe with id {nonexistent_recipe_id} was not found.'
+        self.assertEqual(response.data['detail'], error_detail)
+
     # POST
-    def test_logged_user_posts_ingredient_with_not_unique_name(self):
+    def test_logged_user_posts_ingredient_with_not_unique_name_for_recipe(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
         ingredient = Ingredient.objects.filter(recipe=recipe).first()
         user = CustomUser.objects.filter(username='user1').first()
@@ -646,6 +703,8 @@ class IngredientsTests(APITestCase):
         response = self.client.post(url, data={'name': ingredient.name,
                                                'quantity': 10}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        error_detail = f"Ingredient with name '{ingredient.name}' already exists for this recipe."
+        self.assertEqual(response.data[0], error_detail)
 
     def test_logged_user_posts_ingredient_with_quantity_lower_than_zero(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -656,6 +715,26 @@ class IngredientsTests(APITestCase):
                       kwargs={'recipe_pk': recipe.id})
         response = self.client.post(url, data={'name': 'butter',
                                                'quantity': -1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_posts_ingredient_with_empty_body(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_posts_ingredient_with_no_body(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-ingredient-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_logged_user_posts_new_ingredient(self):
@@ -689,11 +768,15 @@ class IngredientsTests(APITestCase):
         user = CustomUser.objects.filter(username='user1').first()
         token = AccessToken.for_user(user)
         self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
-        url = reverse('recipe-ingredient-list', kwargs={'recipe_pk': 67})
+        nonexistent_recipe_id = 67
+        url = reverse('recipe-ingredient-list',
+                      kwargs={'recipe_pk': nonexistent_recipe_id})
         response = self.client.post(url, data={'name': 'basil',
                                                'quantity': 20,
                                                'units_of_measurement': 'gm'})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f"Recipe with id {nonexistent_recipe_id} was not found."
+        self.assertEqual(response.data['detail'], error_detail)
 
     def test_logged_user_without_permission_posts_ingredient(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -792,14 +875,17 @@ class IngredientsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_ingredient_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 78
         url = reverse('recipe-ingredient-detail',
-                      kwargs={'recipe_pk': 78,
+                      kwargs={'recipe_pk': nonexistent_recipe_id,
                               'pk': 67})
         response = self.client.put(url, data={'name': 'cheddar',
                                               'quantity': 50,
                                               'units_of_measurement': 'gm'},
                                    format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f"Recipe with id {nonexistent_recipe_id} was not found."
+        self.assertEqual(response.data['detail'], error_detail)
 
     def test_logged_user_without_permission_updates_ingredient(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -856,11 +942,14 @@ class IngredientsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_ingredient_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 90
         url = reverse('recipe-ingredient-detail',
-                      kwargs={'recipe_pk': 78,
+                      kwargs={'recipe_pk': nonexistent_recipe_id,
                               'pk': 67})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f"Recipe with id {nonexistent_recipe_id} was not found."
+        self.assertEqual(response.data['detail'], error_detail)
 
     def test_logged_user_without_permission_deletes_ingredient(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -962,13 +1051,23 @@ class RecipeImagesTests(APITestCase):
         }
         self.assertEqual(response.data, expected_data)
 
-    def test_get_nonexistent_ingredient_detail(self):
+    def test_get_nonexistent_image_detail(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
         url = reverse('recipe-image-detail',
                       kwargs={'recipe_pk': recipe.id,
                               'pk': 78})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_image_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 70
+        url = reverse('recipe-image-detail',
+                      kwargs={'recipe_pk': nonexistent_recipe_id,
+                              'pk': 89})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f'Recipe with id {nonexistent_recipe_id} was not found.'
+        self.assertEqual(response.data['detail'], error_detail)
 
     # POST
     def test_logged_user_posts_new_image(self):
@@ -1025,14 +1124,39 @@ class RecipeImagesTests(APITestCase):
         response = self.client.post(
             url, data={'image': uploaded_file}, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        error_detail = "More than 3 images cannot be posted for one recipe."
+        self.assertEqual(response.data[0], error_detail)
+
+    def test_logged_user_posts_image_with_empty_body(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-image-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_posts_image_with_no_body(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-image-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data=None, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_post_image_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 92
         url = reverse('recipe-image-list',
-                      kwargs={'recipe_pk': 78})
+                      kwargs={'recipe_pk': nonexistent_recipe_id})
         # ViewSet will raise a 404 error so it does not really
         # matter if real image is sent and if right format is used
         response = self.client.post(url, data={})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f'Recipe with id {nonexistent_recipe_id} was not found.'
+        self.assertEqual(response.data['detail'], error_detail)
 
     def test_logged_user_without_permission_posts_image(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -1080,11 +1204,14 @@ class RecipeImagesTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_image_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 87
         url = reverse('recipe-image-detail',
-                      kwargs={'recipe_pk': 89,
+                      kwargs={'recipe_pk': nonexistent_recipe_id,
                               'pk': 67})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f'Recipe with id {nonexistent_recipe_id} was not found.'
+        self.assertEqual(response.data['detail'], error_detail)
 
     def test_logged_user_without_permission_deletes_image(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -1180,6 +1307,16 @@ class ReviewsTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_get_review_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 98
+        url = reverse('recipe-review-detail',
+                      kwargs={'recipe_pk': nonexistent_recipe_id,
+                              'pk': 90})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f'Recipe with id {nonexistent_recipe_id} was not found.'
+        self.assertEqual(response.data['detail'], error_detail)
+
     # POST
     def test_logged_user_posts_review(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -1218,6 +1355,26 @@ class ReviewsTests(APITestCase):
         response = self.client.post(url, data={'content': ''}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_logged_user_posts_review_with_empty_body(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-review-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_posts_review_with_no_body(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-review-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data=None, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_logged_user_with_review_posts_new_review_on_recipe(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
         user = CustomUser.objects.filter(username='user2').first()
@@ -1228,6 +1385,8 @@ class ReviewsTests(APITestCase):
         response = self.client.post(
             url, data={'content': 'New content'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        error_detail = 'User can only have one review for each recipe.'
+        self.assertEqual(response.data['detail'], error_detail)
 
     def test_not_authorized_user_posts_review(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -1236,6 +1395,19 @@ class ReviewsTests(APITestCase):
         response = self.client.post(url,
                                     data={'content': 'Content'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logged_user_posts_review_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 90
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-review-list',
+                      kwargs={'recipe_pk': nonexistent_recipe_id})
+        response = self.client.post(
+            url, data={'content': 'content'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f'Recipe with id {nonexistent_recipe_id} was not found.'
+        self.assertEqual(response.data['detail'], error_detail)
 
     # PUT
     def test_logged_user_updates_review_with_invalid_data(self):
@@ -1252,6 +1424,32 @@ class ReviewsTests(APITestCase):
                                    format='json')
         self.assertEqual(response.status_code,
                          status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_updates_review_with_empty_body(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user2').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        review = Review.objects.filter(
+            Q(recipe=recipe) & Q(author=user)).first()
+        url = reverse('recipe-review-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': review.id})
+        response = self.client.put(url, data={}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_updates_review_with_no_body(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user2').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        review = Review.objects.filter(
+            Q(recipe=recipe) & Q(author=user)).first()
+        url = reverse('recipe-review-detail',
+                      kwargs={'recipe_pk': recipe.id,
+                              'pk': review.id})
+        response = self.client.put(url, data=None, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_logged_user_updates_review(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -1296,12 +1494,15 @@ class ReviewsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_review_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 99
         url = reverse('recipe-review-detail',
-                      kwargs={'recipe_pk': 89,
+                      kwargs={'recipe_pk': nonexistent_recipe_id,
                               'pk': 67})
         response = self.client.put(url, data={'content': 'Content'},
                                    format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f'Recipe with id {nonexistent_recipe_id} was not found.'
+        self.assertEqual(response.data['detail'], error_detail)
 
     def test_logged_user_without_permission_updates_review(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -1356,11 +1557,14 @@ class ReviewsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_review_for_nonexistent_review(self):
+        nonexistent_recipe_id = 64
         url = reverse('recipe-review-detail',
-                      kwargs={'recipe_pk': 99,
+                      kwargs={'recipe_pk': nonexistent_recipe_id,
                               'pk': 78})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f'Recipe with id {nonexistent_recipe_id} was not found.'
+        self.assertEqual(response.data['detail'], error_detail)
 
     def test_logged_user_without_permission_deletes_review(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -1460,6 +1664,16 @@ class RatingsTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_get_rating_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 45
+        url = reverse('recipe-rating-detail',
+                      kwargs={'recipe_pk': nonexistent_recipe_id,
+                              'pk': 85})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        error_detail = f'Recipe with id {nonexistent_recipe_id} was not found.'
+        self.assertEqual(response.data['detail'], error_detail)
+
     # POST
     def test_logged_user_posts_rating(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
@@ -1507,6 +1721,29 @@ class RatingsTests(APITestCase):
         response = self.client.post(url, data={'value': 11}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_logged_user_posts_rating_with_empty_body(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-rating-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data={}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_posts_rating_with_no_body(self):
+        recipe = Recipe.objects.filter(title='Pasta 1').first()
+        user = CustomUser.objects.filter(username='user1').first()
+        token = AccessToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(token))
+        url = reverse('recipe-rating-list',
+                      kwargs={'recipe_pk': recipe.id})
+        response = self.client.post(url, data=None, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logged_user_posts_rating_for_nonexistent_recipe(self):
+        nonexistent_recipe_id = 90
+
     def test_logged_user_with_rating_posts_new_rating_on_recipe(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()
         user = CustomUser.objects.filter(username='user2').first()
@@ -1517,6 +1754,8 @@ class RatingsTests(APITestCase):
         response = self.client.post(
             url, data={'value': 8}, format='json')
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        error_detail = 'User can only have one rating for each recipe.'
+        self.assertEqual(response.data['detail'], error_detail)
 
     def test_not_authorized_user_posts_rating(self):
         recipe = Recipe.objects.filter(title='Pasta 1').first()

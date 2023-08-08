@@ -243,7 +243,7 @@ class RatingViewSet(viewsets.ModelViewSet):
         if rating:
             raise ConflictException(
                 method='POST',
-                detail='User acn only have one rating for each recipe.'
+                detail='User can only have one rating for each recipe.'
             )
         serializer.save(
             recipe_id=recipe_pk,

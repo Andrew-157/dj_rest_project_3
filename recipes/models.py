@@ -38,9 +38,9 @@ class Rating(models.Model):
 class Recipe(models.Model):
     author = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name='recipes')
-    title = models.CharField(max_length=155, unique=True)
+    title = models.CharField(max_length=155, unique=False)
     instructions = models.TextField()
-    slug = models.SlugField(max_length=155, unique=True, blank=True)
+    slug = models.SlugField(max_length=155, unique=False, blank=True)
     category = models.ForeignKey(Category,
                                  on_delete=models.PROTECT, related_name='recipes')
     # null=True on published has no functionality

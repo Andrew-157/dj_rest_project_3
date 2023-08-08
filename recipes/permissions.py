@@ -54,7 +54,7 @@ class IsRecipeAuthorOrReadOnly(BasePermission):
         recipe = Recipe.objects.filter(id=recipe_id).first()
         if not recipe:
             raise NotFound(
-                detail=f"Recipe with id {recipe_id} was not found")
+                detail=f"Recipe with id {recipe_id} was not found.")
         if request.method in SAFE_METHODS:
             return True
         return recipe.author == request.user
@@ -66,7 +66,7 @@ class IsRecipeAuthorOrReadOnly(BasePermission):
         recipe = Recipe.objects.filter(id=recipe_id).first()
         if not recipe:
             raise NotFound(
-                detail=f"Recipe with id {recipe_id} was not found")
+                detail=f"Recipe with id {recipe_id} was not found.")
         if request.method in SAFE_METHODS:
             return True
         return obj.recipe.author == request.user
