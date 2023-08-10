@@ -123,6 +123,17 @@ After that, in command line run:
 Go to your browser at the address: 'http://127.0.0.1:8000/', you should be able to see root of the API. `DRF`
 provides beautiful client to work with API, so you do not need any additional tools to make requests(only, of course, if you want to use anything else).
 
+### Admin site
+
+If you want to visit admin site, run the following command:
+```
+    python manage.py createsuperuser
+```
+
+Enter credentials for your admin user, and visit 'http://127.0.0.1:8000/admin',
+login using the same credentials you used when you created admin user.
+
+
 ### Usage specifics
 This API uses `JWT`-token(JSON Web Token) for authenticating user. That means that to be recognized by application as authenticated user, headers sent to application must contain header `Authorization` with value `JWT` followed by space and generated `JWT` token itself. So, to authenticate, you will need:
 * start server and visit 'http://127.0.0.1:8000/auth/users' in your browser(or just start server and use this url to make a request using tools you like instead of `DRF` client)
