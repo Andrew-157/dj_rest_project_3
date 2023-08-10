@@ -124,3 +124,13 @@ For `Unix`-based systems
 
 Go to your browser at the address: 'http://127.0.0.1:8000/', you should be able to see root of the API. `DRF`
 provides beautiful client to work with API, so you do not need any additional tools to make requests(only, of course, if you want to use anything else).
+
+### Usage specifics
+This API uses `JWT`-token(JSON Web Token) for authenticating user. That means that to be recognized by application as authenticated user, headers sent to application must contain header `Authorization` with value `JWT` followed by space and generated `JWT` token itself. So, to authenticate, you will need:
+* start server and visit 'http://127.0.0.1:8000/auth/users' in your browser(or just start server and use this url to make a request using tools you like instead of `DRF` client)
+* you will see a form to fill, enter all your credentials(if you are not using `DRF` client, send `POST` request to url 'http://127.0.0.1:8000/auth/users', with body consisting of: username, email, password
+and optional image - be sure to use appropriate format or encoding when sending an image)
+* visit 'http://127.0.0.1:8000/auth/jwt/create' in your browser and enter necessary credentials(in case you are not using `DRF` client, send `POST` request to this endpoint with body consisting of username and password)
+* if entered credentials are valid, you will get response body looking like this: 
+    {"access_token": <access_token>,
+    "refresh_token": <refresh_token>}
