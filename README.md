@@ -13,6 +13,10 @@ This API allows users to share their culinary recipes of particular category(lik
 * Admin users create categories. Users than choose category in which they want to publish their recipe.
 * Users(authenticated as well as non-authenticated users) can view all categories available, all recipes, all ratings, all reviews and all authenticated users(except admins) with their recipes
 
+### Technologies
+* `Django`
+* `Django REST Framework`
+* `MySQL`
 
 ### Project structure
 Project consists of two apps:
