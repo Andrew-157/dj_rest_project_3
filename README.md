@@ -133,4 +133,9 @@ and optional image - be sure to use appropriate format or encoding when sending 
 * visit 'http://127.0.0.1:8000/auth/jwt/create' in your browser and enter necessary credentials(in case you are not using `DRF` client, send `POST` request to this endpoint with body consisting of username and password)
 * if entered credentials are valid, you will get response body looking like this: 
     {"access_token": <access_token>,
-    "refresh_token": <refresh_token>}
+    "refresh_token": <refresh_token>}, use these tokens to work with the API.
+
+To continue working with `DRF` client, you can provide header, using different browser extensions(
+    [Modheader](https://chrome.google.com/webstore/detail/modheader-modify-http-hea/idgpnmonknjnojddfkpgkljpfnnfcklj), for example
+):
+![Authorization](docs/images/Authorization.png)
