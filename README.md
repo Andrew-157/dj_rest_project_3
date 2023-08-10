@@ -66,8 +66,8 @@ Inside your activated virtual environment, run:
 ```
     pip install -r requirements.txt
 ```
-[#1589F0](https://placehold.co/15x15/1589F0/1589F0.png) For Windows
+For Windows
 ```
     pip3 install -r requirements.txt
 ```
-[#1589F0](https://placehold.co/15x15/1589F0/1589F0.png) For Unix-based systems
+For Unix-based systems
