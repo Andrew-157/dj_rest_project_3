@@ -51,3 +51,23 @@ Required packages:
     djangorestframework-simplejwt
     django-debug-toolbar
 ```
+
+If you are using `pipenv` for managing virtual environments, in command line run:
+```
+    pipenv install
+```
+And then to activate environment run:
+```
+    pipenv shell
+```
+
+You can also use file `requirements.txt` with pip.
+Inside your activated virtual environment, run:
+```
+    pip install -r requirements.txt
+```
+[#1589F0](https://placehold.co/15x15/1589F0/1589F0.png) For Windows
+```
+    pip3 install -r requirements.txt
+```
+[#1589F0](https://placehold.co/15x15/1589F0/1589F0.png) For Unix-based systems
