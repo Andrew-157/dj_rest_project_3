@@ -3,14 +3,12 @@ import tempfile
 from PIL import Image
 from io import BytesIO
 from django.db.models import Avg
-from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework.exceptions import ErrorDetail
 from recipes.models import Category, Recipe, Ingredient, RecipeImage, Review, Rating
 from users.models import CustomUser
 

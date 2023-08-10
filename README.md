@@ -115,12 +115,6 @@ After that, in command line run:
     python manage.py migrate
     python manage.py runserver
 ```
-For `Windows`
-```
-    python3 manage.py migrate
-    python3 manage.py runserver
-```
-For `Unix`-based systems
 
 Go to your browser at the address: 'http://127.0.0.1:8000/', you should be able to see root of the API. `DRF`
 provides beautiful client to work with API, so you do not need any additional tools to make requests(only, of course, if you want to use anything else).
@@ -178,3 +172,40 @@ To continue working with `DRF` client, you can provide header, using different b
 * `GET` '/recipes/{recipe_pk}/reviews/{pk}/' - get review-detail
 * `PUT` '/recipes/{recipe_pk}/reviews/{pk}/' - update review(accessible only by author of the review)
 * `DELETE` '/recipes/{recipe_pk}/reviews/{pk}' - delete review(accessible only by author of the review)
+
+### Testing
+Currently this API has only one file with tests with location: 'recipes/tests/test_views.py'
+Tests for this API are written using `DRF`'s `APITestCase`:
+```python
+    from rest_framework.test import APITestCase
+```
+All test classes inherit from `APITestCase`:
+```python
+    class CategoriesTests(APITestCase):
+        pass
+```
+
+To run all project's tests, run:
+```
+    python manage.py test
+```
+
+To run tests only of a particular app, run:
+```
+    python manage.py test recipes
+```
+
+To run tests only in a particular module, run:
+```
+    python manage.py test recipes.tests.test_views
+```
+
+To run particular test class, run:
+```
+    python manage.py test recipes.tests.test_views.CategoriesTests
+```
+
+To run particular test of a test class, run:
+```
+    python manage.py test recipes.tests.test_views.CategoriesTests.test_get_category_list
+```
