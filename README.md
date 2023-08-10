@@ -25,6 +25,11 @@ Project consists of two apps:
 
 ### Installation
 
+**To work with this project you need `Python3.9+` installed on your machine**
+
+If you do not have `Python` installed, 
+visit official documentation and install it: https://www.python.org/downloads/
+
 Clone repository, using command:
 ```
     git clone https://github.com/Andrew-157/dj_rest_project_3
@@ -116,3 +121,6 @@ For `Windows`
     python3 manage.py runserver
 ```
 For `Unix`-based systems
+
+Go to your browser at the address: 'http://127.0.0.1:8000/', you should be able to see root of the API. `DRF`
+provides beautiful client to work with API, so you do not need any additional tools to make requests(only, of course, if you want to use anything else).
