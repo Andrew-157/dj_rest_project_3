@@ -39,17 +39,18 @@ Then, use command:
 
 Required packages:
 ```
-    django
-    djangorestframework
-    mysqlclient
-    django-environ
-    pillow
-    drf-nested-routers
-    django-cleanup
-    django-filter
-    djoser
-    djangorestframework-simplejwt
-    django-debug-toolbar
+    django==4.2.4
+    djangorestframework==3.14.0
+    mysqlclient==2.2.0
+    django-environ==0.10.0
+    pillow==10.0.0
+    drf-nested-routers==0.93.4
+    django-cleanup==8.0.0
+    django-filter==23.2
+    djoser==2.2.0
+    djangorestframework-simplejwt==5.2.2
+    django-debug-toolbar==4.1.0
+    autopep8==2.0.2
 ```
 
 If you are using `pipenv` for managing virtual environments, in command line run:
@@ -66,8 +67,52 @@ Inside your activated virtual environment, run:
 ```
     pip install -r requirements.txt
 ```
-For Windows
+For `Windows`
 ```
     pip3 install -r requirements.txt
 ```
-For Unix-based systems
+For `Unix`-based systems
+
+### Run project
+
+**The following steps show how to run project locally(i.e., with DEBUG=True)**
+
+Generate `SECRET KEY` for your project, using the following code:
+```python
+    import secrets
+
+    secret_key = secrets.token_hex(34)
+
+    print(secret_key)
+```
+
+In directory `api` create file `.env`(**check that this file is in `.gitignore`**) and the following line:
+```
+    SECRET_KEY=<your_secret_key>
+```
+
+Then you need to create MySQL database(using MySQL Workbench or any other tool), using `SQL` statement:
+```SQL
+    CREATE DATABASE <your_database_name>;
+```
+
+Next, go to `.env` and, using your database credentials, add the following lines:
+```
+    DB_NAME=<your_database_name>
+    DB_USER=<your_database_user>
+    DB_PASSWORD=<your_database_password>
+    DB_HOST=<your_database_host>
+    DB_PORT=<your_database_port>
+```
+
+After that, in command line run:
+```
+    python manage.py migrate
+    python manage.py runserver
+```
+For `Windows`
+```
+    python3 manage.py migrate
+    python3 manage.py runserver
+```
+For `Unix`-based systems
