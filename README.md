@@ -139,3 +139,42 @@ To continue working with `DRF` client, you can provide header, using different b
     [Modheader](https://chrome.google.com/webstore/detail/modheader-modify-http-hea/idgpnmonknjnojddfkpgkljpfnnfcklj), for example
 ):
 ![Authorization](docs/images/Authorization.png)
+
+### API Endpoints
+
+`Users`:
+* `POST` '/auth/users/' - create new user
+* `GET` '/auth/users/me/' - get currently authenticated user's credentials
+* `PUT` '/auth/users/me/' - update currently authenticated user's credentials
+* `POST` '/auth/jwt/create/' - get access `JWT` token and refresh `JWT` token
+
+`Recipes`:
+* `GET` '/categories/' - get category-list
+* `POST` '/categories/' - post new category(accessible only by admin users)
+* `GET` '/categories/{pk}/' - get category-detail
+* `PUT` '/categories/{pk}/' - update category(accessible only by admin users)
+* `DELETE` '/categories/{pk}/' - delete category(accessible only by admin users)
+* `GET` '/recipes/' - get recipe-list
+* `POST` '/recipes/' - create new recipe(accessible only by authenticated users)
+* `GET` '/recipes/{pk}/' - get recipe-detail
+* `PUT` '/recipes/{pk}/' - update recipe(accessible only by author of the recipe)
+* `DELETE` '/recipes/{pk}/' - delete recipe(accessible only by author of the recipe)
+* `GET` '/recipes/{recipe_pk}/ingredients/' - get ingredient-list for recipe
+* `POST` '/recipes/{recipe_pk}/ingredients/' - post new ingredient for recipe(accessible only by author of the recipe)
+* `GET` '/recipes/{recipe_pk}/ingredients/{pk}/' - get ingredient-detail
+* `PUT` '/recipes/{recipe_pk}/ingredients/{pk}/' - update ingredient(accessible only by author of the recipe)
+* `DELETE` '/recipes/{recipe_pk}/ingredients/{pk}' - delete ingredient(accessible only by author of the recipe)
+* `GET` '/recipes/{recipe_pk}/images/' - get image-list for recipe
+* `POST` '/recipes/{recipe_pk}/images/' - post new image for recipe(accessible only by author of the recipe)
+* `GET` '/recipes/{recipe_pk}/images/{pk}/' - get image-detail
+* `DELETE` '/recipes/{recipe_pk}/images/{pk}' - delete image(accessible only by author of the recipe)
+* `GET` '/recipes/{recipe_pk}/ratings/' - get rating-list for recipe
+* `POST` '/recipes/{recipe_pk}/ratings/' - post new rating for recipe(accessible only by authenticated users)
+* `GET` '/recipes/{recipe_pk}/ratings/{pk}/' - get rating-detail
+* `PUT` '/recipes/{recipe_pk}/ratings/{pk}/' - update rating(accessible only by author of the rating)
+* `DELETE` '/recipes/{recipe_pk}/ratings/{pk}' - delete rating(accessible only by author of the rating)
+* `GET` '/recipes/{recipe_pk}/reviews/' - get review-list for recipe
+* `POST` '/recipes/{recipe_pk}/reviews/' - post new review for recipe(accessible only by authenticated users)
+* `GET` '/recipes/{recipe_pk}/reviews/{pk}/' - get review-detail
+* `PUT` '/recipes/{recipe_pk}/reviews/{pk}/' - update review(accessible only by author of the review)
+* `DELETE` '/recipes/{recipe_pk}/reviews/{pk}' - delete review(accessible only by author of the review)
