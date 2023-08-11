@@ -95,7 +95,7 @@ Generate `SECRET KEY` for your project, using the following code:
     print(secret_key)
 ```
 
-In directory `api` create file `.env`(**check that this file is in `.gitignore`**) and the following line:
+In directory `api` create file `.env`(**check that this file is in `.gitignore`**) and add the following line:
 ```
     SECRET_KEY=<your_secret_key>
 ```
