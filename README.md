@@ -48,11 +48,11 @@ Then, use command:
 
 Required packages:
 ```
-    django==4.2.4
+    Django==4.2.4
     djangorestframework==3.14.0
     mysqlclient==2.2.0
     django-environ==0.10.0
-    pillow==10.0.0
+    Pillow==10.0.0
     drf-nested-routers==0.93.4
     django-cleanup==8.0.0
     django-filter==23.2
