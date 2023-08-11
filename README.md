@@ -6,6 +6,7 @@ This API allows users to share their culinary recipes of particular category(lik
 ### Features 
 * Users can register and login into their accounts.
 * Each user can have a profile image(however, this is not obligatory).
+* Users can update their accounts.
 * Authenticated users can publish, update and delete recipes.
 * Authenticated users can publish up to 3 images for each of their recipes(as well as delete them).
 * Authenticated users can publish, update and delete ratings for recipes.
