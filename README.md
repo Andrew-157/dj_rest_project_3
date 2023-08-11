@@ -135,6 +135,7 @@ login using the same credentials you used when you created admin user.
 
 
 ### Usage specifics
+
 This API uses `JWT`-token(JSON Web Token) for authenticating user. That means that to be recognized by application as authenticated user, headers sent to application must contain header `Authorization` with value `JWT` followed by space and generated `JWT` token itself. So, to authenticate, you will need:
 * start server and visit 'http://127.0.0.1:8000/auth/users' in your browser(or just start server and use this url to make a request using tools you like instead of `DRF` client)
 * you will see a form to fill, enter all your credentials(if you are not using `DRF` client, send `POST` request to url 'http://127.0.0.1:8000/auth/users', with body consisting of: username, email, password
@@ -150,6 +151,8 @@ To continue working with `DRF` client, you can provide header, using different b
 ![Authorization](docs/images/Authorization.png)
 
 ### API Endpoints
+
+* `GET` '/' - API's root
 
 `Users`:
 * `POST` '/auth/users/' - create new user
